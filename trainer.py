@@ -13,6 +13,8 @@ import torch.nn.init as init
 from torch.optim import lr_scheduler
 
 from funit_model import FUNITModel
+from torchvision import models
+from torchsummary import summary
 
 
 def update_average(model_tgt, model_src, beta=0.999):
@@ -59,6 +61,10 @@ class Trainer(nn.Module):
 
     def dis_update(self, co_data, cl_data, hp):
         self.dis_opt.zero_grad()
+
+        #print("--------PRINTING SUMMARY--------")
+        #summary(self.model, [co_data, cl_data, hp, 'dis_update'])
+        
         al, lfa, lre, reg, acc = self.model(co_data, cl_data, hp, 'dis_update')
         self.loss_dis_total = torch.mean(al)
         self.loss_dis_fake_adv = torch.mean(lfa)
@@ -120,6 +126,10 @@ class Trainer(nn.Module):
     def forward(self, *inputs):
         print('Forward function not implemented.')
         pass
+
+    def summary(self, inshape = (1, 200, 200)):
+        print("--------PRINTING SUMMARY--------")
+        summary()
 
 
 def get_model_list(dirname, key):

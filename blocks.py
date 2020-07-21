@@ -8,6 +8,8 @@ import torch.nn.functional as F
 from torch import nn
 
 
+inplace_bool = False
+
 class ResBlocks(nn.Module):
     def __init__(self, num_blocks, dim, norm, activation, pad_type):
         super(ResBlocks, self).__init__()
@@ -89,9 +91,9 @@ class LinearBlock(nn.Module):
 
         # initialize activation
         if activation == 'relu':
-            self.activation = nn.ReLU(inplace=True)
+            self.activation = nn.ReLU(inplace=inplace_bool)
         elif activation == 'lrelu':
-            self.activation = nn.LeakyReLU(0.2, inplace=True)
+            self.activation = nn.LeakyReLU(0.2, inplace=inplace_bool)
         elif activation == 'tanh':
             self.activation = nn.Tanh()
         elif activation == 'none':
@@ -140,9 +142,9 @@ class Conv2dBlock(nn.Module):
 
         # initialize activation
         if activation == 'relu':
-            self.activation = nn.ReLU(inplace=True)
+            self.activation = nn.ReLU(inplace=inplace_bool)
         elif activation == 'lrelu':
-            self.activation = nn.LeakyReLU(0.2, inplace=True)
+            self.activation = nn.LeakyReLU(0.2, inplace=inplace_bool)
         elif activation == 'tanh':
             self.activation = nn.Tanh()
         elif activation == 'none':
@@ -156,11 +158,13 @@ class Conv2dBlock(nn.Module):
         if self.activation_first:
             if self.activation:
                 x = self.activation(x)
-            x = self.conv(self.pad(x))
+            x = self.pad(x)
+            x = self.conv(x)
             if self.norm:
                 x = self.norm(x)
         else:
-            x = self.conv(self.pad(x))
+            x = self.pad(x)
+            x = self.conv(x)
             if self.norm:
                 x = self.norm(x)
             if self.activation:

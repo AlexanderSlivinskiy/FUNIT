@@ -11,6 +11,13 @@ from torch import autograd
 
 from blocks import LinearBlock, Conv2dBlock, ResBlocks, ActFirstResBlock
 
+from debugUtils import Debugger
+
+PREFIX = "networks.py"
+KERNEL_SIZE_7 = 3
+KERNEL_SIZE_4 = 3
+KERNEL_SIZE_5 = 3
+
 
 def assign_adain_params(adain_params, model):
     # assign the adain_params to the AdaIN layers in model
@@ -39,7 +46,8 @@ class GPPatchMcResDis(nn.Module):
         assert hp['n_res_blks'] % 2 == 0, 'n_res_blk must be multiples of 2'
         self.n_layers = hp['n_res_blks'] // 2
         nf = hp['nf']
-        cnn_f = [Conv2dBlock(3, nf, 7, 1, 3,
+        input_channels=hp['input_nc']
+        cnn_f = [Conv2dBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
                              pad_type='reflect',
                              norm='none',
                              activation='none')]
@@ -63,9 +71,15 @@ class GPPatchMcResDis(nn.Module):
     def forward(self, x, y):
         assert(x.size(0) == y.size(0))
         feat = self.cnn_f(x)
+        #print("FORWARD 2: ",feat)
         out = self.cnn_c(feat)
+        #print("FORWARD 3: ",out)
         index = torch.LongTensor(range(out.size(0))).cuda()
+        #print("FORWARD 4: ",index)
         out = out[index, y, :, :]
+        #print("Y: ",y)
+        #print("FORWARD 5: ",out.detach().cpu())
+        #print("FORWARD: ",feat.detach().cpu())
         return out, feat
 
     def calc_dis_fake_loss(self, input_fake, input_label):
@@ -78,9 +92,33 @@ class GPPatchMcResDis(nn.Module):
         return fake_loss, fake_accuracy, resp_fake
 
     def calc_dis_real_loss(self, input_real, input_label):
+        debug = Debugger(self.calc_dis_real_loss, self, PREFIX)
+        #debug.printCheckpoint() #0
+        #print("FORWARD: ",input_real.shape, input_label)
         resp_real, gan_feat = self.forward(input_real, input_label)
+        """
+
+        #print(resp_real.shape)
+        #print(gan_feat.cpu)
+        debug.printCheckpoint() #1
+        a = resp_real.size()
+        debug.printCheckpoint() #2
+        b = np.prod(a)
+        debug.printCheckpoint() #3
+        c = torch.tensor(b)
+        debug.printCheckpoint() #4
+        d = c.float()
+        #print(d.shape)
+        debug.printCheckpoint() #5
+        #exit()
+        e = d.cuda()
+        total_count=d
+        debug.printCheckpoint() #6
+
+        """
         total_count = torch.tensor(np.prod(resp_real.size()),
                                    dtype=torch.float).cuda()
+        #debug.printCheckpoint()
         real_loss = torch.nn.ReLU()(1.0 - resp_real).mean()
         correct_count = (resp_real >= 0).sum()
         real_accuracy = correct_count.type_as(real_loss) / total_count
@@ -118,8 +156,10 @@ class FewShotGen(nn.Module):
         n_mlp_blks = hp['n_mlp_blks']
         n_res_blks = hp['n_res_blks']
         latent_dim = hp['latent_dim']
+        input_channels = hp['input_nc']
+        output_channels = hp['output_nc']
         self.enc_class_model = ClassModelEncoder(down_class,
-                                                 3,
+                                                 input_channels,
                                                  nf,
                                                  latent_dim,
                                                  norm='none',
@@ -128,7 +168,7 @@ class FewShotGen(nn.Module):
 
         self.enc_content = ContentEncoder(down_content,
                                           n_res_blks,
-                                          3,
+                                          input_channels,
                                           nf,
                                           'in',
                                           activ='relu',
@@ -137,7 +177,7 @@ class FewShotGen(nn.Module):
         self.dec = Decoder(down_content,
                            n_res_blks,
                            self.enc_content.output_dim,
-                           3,
+                           output_channels,
                            res_norm='adain',
                            activ='relu',
                            pad_type='reflect')
@@ -176,18 +216,18 @@ class ClassModelEncoder(nn.Module):
     def __init__(self, downs, ind_im, dim, latent_dim, norm, activ, pad_type):
         super(ClassModelEncoder, self).__init__()
         self.model = []
-        self.model += [Conv2dBlock(ind_im, dim, 7, 1, 3,
+        self.model += [Conv2dBlock(ind_im, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
                                    activation=activ,
                                    pad_type=pad_type)]
         for i in range(2):
-            self.model += [Conv2dBlock(dim, 2 * dim, 4, 2, 1,
+            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
             dim *= 2
         for i in range(downs - 2):
-            self.model += [Conv2dBlock(dim, dim, 4, 2, 1,
+            self.model += [Conv2dBlock(dim, dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
@@ -204,12 +244,12 @@ class ContentEncoder(nn.Module):
     def __init__(self, downs, n_res, input_dim, dim, norm, activ, pad_type):
         super(ContentEncoder, self).__init__()
         self.model = []
-        self.model += [Conv2dBlock(input_dim, dim, 7, 1, 3,
+        self.model += [Conv2dBlock(input_dim, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
                                    activation=activ,
                                    pad_type=pad_type)]
         for i in range(downs):
-            self.model += [Conv2dBlock(dim, 2 * dim, 4, 2, 1,
+            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
@@ -234,12 +274,12 @@ class Decoder(nn.Module):
                                  activ, pad_type=pad_type)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
-                           Conv2dBlock(dim, dim // 2, 5, 1, 2,
+                           Conv2dBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
                                        norm='in',
                                        activation=activ,
                                        pad_type=pad_type)]
             dim //= 2
-        self.model += [Conv2dBlock(dim, out_dim, 7, 1, 3,
+        self.model += [Conv2dBlock(dim, out_dim, KERNEL_SIZE_7, 1, 3,
                                    norm='none',
                                    activation='tanh',
                                    pad_type=pad_type)]

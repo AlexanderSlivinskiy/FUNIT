@@ -12,7 +12,26 @@ from torch.utils.data import DataLoader
 from torchvision import transforms
 import torchvision.utils as vutils
 
-from data import ImageLabelFilelist
+from data import ImageLabelFilelist, ImageLabelFilelistCustom
+import customTransforms
+from imgaug import augmenters as iaa
+from glob import glob
+
+# Finds biggest 2^x such that 2^x < size
+def find_next_crop_size(size):
+    x = 0
+    while (size >= (2 ** (x+1))):
+        x+=1
+    return 2**x
+
+# Scales so much down that picture is still bigger than desired size so that crop can crop it exactly
+# But resizing tries to save the context
+# Probably 
+def resize_correctly(current_size, desired_size):
+    x = 1
+    while (desired_size <= current_size/(x+1)):
+        x+=1
+    return x
 
 
 def update_average(model_tgt, model_src, beta=0.999):
@@ -22,6 +41,32 @@ def update_average(model_tgt, model_src, beta=0.999):
             p_src = param_dict_src[p_name]
             assert(p_src is not p_tgt)
             p_tgt.copy_(beta*p_tgt + (1. - beta)*p_src)
+
+
+def create_loader(root, path, rescale_size_a, rescale_size_b, batch_size, num_classes=None,
+    num_workers=4, desired_size=None, resize_shorter_side=None, shuffle=True, return_paths=False, drop_last=True):
+
+    crop_size = find_next_crop_size(rescale_size_a)
+    cut = rescale_size_a - crop_size
+    print("RESCALE_SIZE: ",rescale_size_a)
+    transforms_ = transforms.Compose([
+        iaa.Sequential([
+            iaa.Resize({"shorter-side":resize_shorter_side, "longer-side":"keep-aspect-ratio"}),
+            iaa.CropToFixedSize(width=desired_size, height=desired_size),
+            iaa.HorizontalFlip(p=0.5),
+            iaa.VerticalFlip(p=0.5)
+        ]).augment_image,
+        customTransforms.ToTensor(),
+        customTransforms.RescaleToOneOne()
+    ])
+    dataset = ImageLabelFilelistCustom(root=root, path=path, transform=transforms_, return_paths=return_paths, num_classes=num_classes)
+    print(dataset[0][0].shape)
+    loader = DataLoader(dataset,
+                        batch_size,
+                        shuffle=shuffle,
+                        drop_last=drop_last,
+                        num_workers=num_workers)
+    return loader
 
 
 def loader_from_list(
@@ -37,7 +82,7 @@ def loader_from_list(
         center_crop=False,
         return_paths=False,
         drop_last=True):
-    transform_list = [transforms.ToTensor(),
+    transform_list = [customTransforms.ToTensor(),
                       transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5))]
     if center_crop:
         transform_list = [transforms.CenterCrop((height, width))] + \
@@ -97,6 +142,38 @@ def get_evaluation_loaders(conf, shuffle_content=False):
             drop_last=False)
     return content_loader, class_loader
 
+def get_train_loaders_custom(conf):
+    batch_size = conf['batch_size']
+    num_workers = conf['num_workers']
+    root = "."
+    pathBasis = conf["data_folder_train"]
+    scalar = conf["scalar"]
+    rescale_size_a = (conf["size_a"]//scalar)
+    rescale_size_b = (conf["size_b"]//scalar)
+
+    train_content_loader = create_loader(
+        ".",
+        os.path.join(pathBasis, "A"),
+        rescale_size_a,
+        rescale_size_b,
+        desired_size = conf["desired_size"],
+        resize_shorter_side = conf["resize_shorter_side"],
+        num_classes=conf['dis']['num_classes'],
+        batch_size=batch_size,
+        num_workers=num_workers
+    )
+    train_class_loader = create_loader(
+        ".",
+        os.path.join(pathBasis, "A"),
+        rescale_size_a,
+        rescale_size_b,
+        desired_size = conf["desired_size"],
+        resize_shorter_side = conf["resize_shorter_side"],
+        num_classes=conf['dis']['num_classes'],
+        batch_size=batch_size,
+        num_workers=num_workers
+    )
+    return (train_content_loader, train_class_loader, train_content_loader, train_class_loader)
 
 def get_train_loaders(conf):
     batch_size = conf['batch_size']
@@ -149,6 +226,27 @@ def get_config(config):
     with open(config, 'r') as stream:
         return yaml.load(stream, Loader=yaml.FullLoader)
 
+def make_log_folder(basePath):
+    logs_path = os.path.join(basePath, "logs")
+    exists = True
+    newest_index = 1
+    if not os.path.exists(logs_path):
+        print("Creating directory: {}".format(logs_path))
+        os.makedirs(logs_path)
+        exists = False
+    if exists:
+        #Expected strucutre "run_1, run_2, SOME_COOL_NAME_3 ..."
+        dirs = glob(os.path.join(logs_path, "*"))
+        for direc in dirs:
+            direc = direc.split("/")[-1]
+            index = int(direc.split("_")[-1])
+            newest_index = max(newest_index, index)
+        newest_index += 1
+    new_dir = os.path.join(logs_path, "run_"+str(newest_index))
+    os.makedirs(new_dir)
+    return new_dir
+
+    
 
 def make_result_folders(output_directory):
     image_directory = os.path.join(output_directory, 'images')

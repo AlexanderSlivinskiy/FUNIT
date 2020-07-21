@@ -9,9 +9,15 @@ import torch
 import torch.nn as nn
 
 from networks import FewShotGen, GPPatchMcResDis
+from debugUtils import printCheckpoint, Debugger
+import torch.nn.functional as F
 
+PREFIX = "funit_model.py"
 
 def recon_criterion(predict, target):
+    if (target.shape[-1]!=predict.shape[-1]):
+        print("Funit_model.py recon_criterion: SHAPE OF INPUT", target.shape, "AND OF PREDICTION", predict.shape, "AREN'T EQUAL!")
+        predict = F.interpolate(predict, target.shape[-1])
     return torch.mean(torch.abs(predict - target))
 
 
@@ -23,6 +29,9 @@ class FUNITModel(nn.Module):
         self.gen_test = copy.deepcopy(self.gen)
 
     def forward(self, co_data, cl_data, hp, mode):
+
+        #debug = Debugger(self.forward.__name__, self.__class__.__name__, PREFIX) #Delete afterwards
+
         xa = co_data[0].cuda()
         la = co_data[1].cuda()
         xb = cl_data[0].cuda()
@@ -33,6 +42,9 @@ class FUNITModel(nn.Module):
             s_xb = self.gen.enc_class_model(xb)
             xt = self.gen.decode(c_xa, s_xb)  # translation
             xr = self.gen.decode(c_xa, s_xa)  # reconstruction
+            #if (xt.shape[1]!=xa.shape[1]):
+            #    print("SHAPE OF INPUT %d AND OF PREDICTION %d AREN'T EQUAL!" % (xa.shape, xt.shape))
+            #    xt = F.interpolate(xt, xa.shape[1])
             l_adv_t, gacc_t, xt_gan_feat = self.dis.calc_gen_loss(xt, lb)
             l_adv_r, gacc_r, xr_gan_feat = self.dis.calc_gen_loss(xr, la)
             _, xb_gan_feat = self.dis(xb, lb)

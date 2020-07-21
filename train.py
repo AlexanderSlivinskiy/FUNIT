@@ -8,14 +8,16 @@ import os
 import sys
 import argparse
 import shutil
+from torchsummary import summary
 
 from tensorboardX import SummaryWriter
 
-from utils import get_config, get_train_loaders, make_result_folders
-from utils import write_loss, write_html, write_1images, Timer
+from utils import get_config, get_train_loaders, make_result_folders, get_train_loaders_custom
+from utils import write_loss, write_html, write_1images, Timer, make_log_folder
 from trainer import Trainer
 
 import torch.backends.cudnn as cudnn
+os.environ['CUDA_VISIBLE_DEVICES'] = '2' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
@@ -58,7 +60,7 @@ if opts.multigpus:
 else:
     config['gpus'] = 1
 
-loaders = get_train_loaders(config)
+loaders = get_train_loaders_custom(config)
 train_content_loader = loaders[0]
 train_class_loader = loaders[1]
 test_content_loader = loaders[2]
@@ -66,8 +68,9 @@ test_class_loader = loaders[3]
 
 # Setup logger and output folders
 model_name = os.path.splitext(os.path.basename(opts.config))[0]
+logs_path = make_log_folder(".")
 train_writer = SummaryWriter(
-    os.path.join(opts.output_path + "/logs", model_name))
+    os.path.join(logs_path, model_name))
 output_directory = os.path.join(opts.output_path + "/outputs", model_name)
 checkpoint_directory, image_directory = make_result_folders(output_directory)
 shutil.copy(opts.config, os.path.join(output_directory, 'config.yaml'))
@@ -76,10 +79,13 @@ iterations = trainer.resume(checkpoint_directory,
                             hp=config,
                             multigpus=opts.multigpus) if opts.resume else 0
 
+#trainer.summary(None)
+
 while True:
     for it, (co_data, cl_data) in enumerate(
             zip(train_content_loader, train_class_loader)):
         with Timer("Elapsed time in update: %f"):
+            torch.autograd.set_detect_anomaly(True)
             d_acc = trainer.dis_update(co_data, cl_data, config)
             g_acc = trainer.gen_update(co_data, cl_data, config,
                                        opts.multigpus)
