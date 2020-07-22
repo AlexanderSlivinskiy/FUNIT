@@ -9,7 +9,7 @@ import torch
 from torch import nn
 from torch import autograd
 
-from blocks import LinearBlock, Conv2dBlock, ResBlocks, ActFirstResBlock
+from blocks import LinearBlock, ResBlocks, ActFirstResBlock, InceptionBlock, Conv2dBlock
 
 from debugUtils import Debugger
 
@@ -17,6 +17,8 @@ PREFIX = "networks.py"
 KERNEL_SIZE_7 = 3
 KERNEL_SIZE_4 = 3
 KERNEL_SIZE_5 = 3
+
+#Conv2dBlock = InceptionBlock
 
 
 def assign_adain_params(adain_params, model):
@@ -47,7 +49,7 @@ class GPPatchMcResDis(nn.Module):
         self.n_layers = hp['n_res_blks'] // 2
         nf = hp['nf']
         input_channels=hp['input_nc']
-        cnn_f = [Conv2dBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
+        cnn_f = [InceptionBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
                              pad_type='reflect',
                              norm='none',
                              activation='none')]
@@ -71,15 +73,9 @@ class GPPatchMcResDis(nn.Module):
     def forward(self, x, y):
         assert(x.size(0) == y.size(0))
         feat = self.cnn_f(x)
-        #print("FORWARD 2: ",feat)
         out = self.cnn_c(feat)
-        #print("FORWARD 3: ",out)
         index = torch.LongTensor(range(out.size(0))).cuda()
-        #print("FORWARD 4: ",index)
         out = out[index, y, :, :]
-        #print("Y: ",y)
-        #print("FORWARD 5: ",out.detach().cpu())
-        #print("FORWARD: ",feat.detach().cpu())
         return out, feat
 
     def calc_dis_fake_loss(self, input_fake, input_label):
@@ -216,12 +212,12 @@ class ClassModelEncoder(nn.Module):
     def __init__(self, downs, ind_im, dim, latent_dim, norm, activ, pad_type):
         super(ClassModelEncoder, self).__init__()
         self.model = []
-        self.model += [Conv2dBlock(ind_im, dim, KERNEL_SIZE_7, 1, 3,
+        self.model += [InceptionBlock(ind_im, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
                                    activation=activ,
                                    pad_type=pad_type)]
         for i in range(2):
-            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
@@ -244,7 +240,7 @@ class ContentEncoder(nn.Module):
     def __init__(self, downs, n_res, input_dim, dim, norm, activ, pad_type):
         super(ContentEncoder, self).__init__()
         self.model = []
-        self.model += [Conv2dBlock(input_dim, dim, KERNEL_SIZE_7, 1, 3,
+        self.model += [InceptionBlock(input_dim, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
                                    activation=activ,
                                    pad_type=pad_type)]
@@ -274,7 +270,7 @@ class Decoder(nn.Module):
                                  activ, pad_type=pad_type)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
-                           Conv2dBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
+                           InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
                                        norm='in',
                                        activation=activ,
                                        pad_type=pad_type)]

@@ -39,14 +39,14 @@ dis:
 size_a: 2868
 size_b: 2868
 scalar: 10
-desired_size: 128
-resize_shorter_side: 150
+desired_size: 64
+resize_shorter_side: 70
 input_nc: 1
 output_nc: 1
 
 # data options
 num_workers: 4
-batch_size: 8
+batch_size: 2
 new_size:   0                 # first resize the shortest image side to this size
 crop_image_height: 0          # random crop image of this height
 crop_image_width: 0           # random crop image of this width

@@ -40,6 +40,7 @@ size_a: 2868
 size_b: 2868
 scalar: 10
 desired_size: 256
+resize_shorter_side: 300
 input_nc: 1
 output_nc: 1
 

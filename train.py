@@ -17,7 +17,7 @@ from utils import write_loss, write_html, write_1images, Timer, make_log_folder
 from trainer import Trainer
 
 import torch.backends.cudnn as cudnn
-os.environ['CUDA_VISIBLE_DEVICES'] = '2' #"0,1" for the hard stuff, "2" for your everyday bread and butter
+os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
@@ -80,7 +80,6 @@ iterations = trainer.resume(checkpoint_directory,
                             multigpus=opts.multigpus) if opts.resume else 0
 
 #trainer.summary(None)
-
 while True:
     for it, (co_data, cl_data) in enumerate(
             zip(train_content_loader, train_class_loader)):

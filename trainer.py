@@ -14,7 +14,10 @@ from torch.optim import lr_scheduler
 
 from funit_model import FUNITModel
 from torchvision import models
+
+
 from torchsummary import summary
+from tensorboardX import SummaryWriter
 
 
 def update_average(model_tgt, model_src, beta=0.999):
@@ -126,10 +129,6 @@ class Trainer(nn.Module):
     def forward(self, *inputs):
         print('Forward function not implemented.')
         pass
-
-    def summary(self, inshape = (1, 200, 200)):
-        print("--------PRINTING SUMMARY--------")
-        summary()
 
 
 def get_model_list(dirname, key):
