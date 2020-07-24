@@ -14,6 +14,7 @@ from torch.optim import lr_scheduler
 
 from funit_model import FUNITModel
 from torchvision import models
+from customOptimizers import Adam16
 
 
 from torchsummary import summary
@@ -37,10 +38,10 @@ class Trainer(nn.Module):
         lr_dis = cfg['lr_dis']
         dis_params = list(self.model.dis.parameters())
         gen_params = list(self.model.gen.parameters())
-        self.dis_opt = torch.optim.RMSprop(
+        self.dis_opt = Adam16(
             [p for p in dis_params if p.requires_grad],
             lr=lr_gen, weight_decay=cfg['weight_decay'])
-        self.gen_opt = torch.optim.RMSprop(
+        self.gen_opt = Adam16(
             [p for p in gen_params if p.requires_grad],
             lr=lr_dis, weight_decay=cfg['weight_decay'])
         self.dis_scheduler = get_scheduler(self.dis_opt, cfg)

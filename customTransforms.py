@@ -41,8 +41,17 @@ class RescaleToOneOne(object):
         Returns:
             Tensor: Converted image.
         """
-        #res = ((pic.double()/ pic.max()) *2)-1
-        res = ((pic.float()/ pic.max()) *2)-1
+        #half does not support the max operation on the CPU but only on CUDA
+        if (pic.dtype == torch.float16):
+            maximum = pic.numpy().max()
+            pic = pic.numpy()
+            maximum = pic.max()
+            res = ((pic / maximum) *2)-1
+            res = torch.from_numpy(res)
+            res = res.half()
+        else:
+            maximum = pic.max()
+            res = ((pic/ maximum) *2)-1
         return res
 
     def __repr__(self):
@@ -65,7 +74,8 @@ class ToTensor(object):
             pic=pic.transpose()
 
         tensor = torch.from_numpy(pic.copy())
-        tensor = tensor.float()
+        #tensor = tensor.float()
+        tensor = tensor.half()
         return tensor
 
     def __repr__(self):

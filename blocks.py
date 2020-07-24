@@ -32,7 +32,7 @@ class ResBlock(nn.Module):
 
         #-------------NOTE_THIS!!---------------#
 
-        
+        InceptionBlock = Conv2dBlock
         model += [InceptionBlock(dim, dim, 3, 1, 1,
                               norm=norm,
                               activation=activation,
@@ -195,10 +195,21 @@ class AdaptiveInstanceNorm2d(nn.Module):
         running_mean = self.running_mean.repeat(b)
         running_var = self.running_var.repeat(b)
         x_reshaped = x.contiguous().view(1, b * c, *x.size()[2:])
+
+        isHalf = (x_reshaped.dtype == torch.float16)
+        isHalfWeight = (self.weight.dtype == torch.float16)
+        if (isHalf):
+            x_reshaped = x_reshaped.float()
+            if (isHalfWeight): #Should never be called since initialized as float()
+                self.weight = self.weight.float()
+                self.bias = self.bias.float()
         out = F.batch_norm(
             x_reshaped, running_mean, running_var, self.weight, self.bias,
             True, self.momentum, self.eps)
-        return out.view(b, c, *x.size()[2:])
+        out = out.view(b, c, *x.size()[2:])
+        if (isHalf):
+            out = out.half()
+        return out
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + str(self.num_features) + ')'

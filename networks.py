@@ -19,6 +19,7 @@ KERNEL_SIZE_4 = 3
 KERNEL_SIZE_5 = 3
 
 #Conv2dBlock = InceptionBlock
+InceptionBlock = Conv2dBlock
 
 
 def assign_adain_params(adain_params, model):
@@ -49,7 +50,7 @@ class GPPatchMcResDis(nn.Module):
         self.n_layers = hp['n_res_blks'] // 2
         nf = hp['nf']
         input_channels=hp['input_nc']
-        cnn_f = [InceptionBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
+        cnn_f = [Conv2dBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
                              pad_type='reflect',
                              norm='none',
                              activation='none')]

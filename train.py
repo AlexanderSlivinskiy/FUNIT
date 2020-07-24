@@ -15,6 +15,8 @@ from tensorboardX import SummaryWriter
 from utils import get_config, get_train_loaders, make_result_folders, get_train_loaders_custom
 from utils import write_loss, write_html, write_1images, Timer, make_log_folder
 from trainer import Trainer
+from blocks import AdaptiveInstanceNorm2d
+from torch.nn import BatchNorm1d, BatchNorm2d
 
 import torch.backends.cudnn as cudnn
 os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
@@ -59,6 +61,13 @@ if opts.multigpus:
         trainer.model, device_ids=range(ngpus))
 else:
     config['gpus'] = 1
+
+trainer.model.half()  # convert to half precision
+for layer in trainer.model.modules():
+    if isinstance(layer, AdaptiveInstanceNorm2d):
+        layer.float()
+    elif isinstance(layer, BatchNorm2d):
+        layer.float()
 
 loaders = get_train_loaders_custom(config)
 train_content_loader = loaders[0]
