@@ -27,8 +27,8 @@ def assign_adain_params(adain_params, model):
         if m.__class__.__name__ == "AdaptiveInstanceNorm2d":
             mean = adain_params[:, :m.num_features]
             std = adain_params[:, m.num_features:2*m.num_features]
-            m.bias = mean.contiguous().view(-1)
-            m.weight = std.contiguous().view(-1)
+            m.bias = mean.contiguous().view(-1).float()
+            m.weight = std.contiguous().view(-1).float()
             if adain_params.size(1) > 2*m.num_features:
                 adain_params = adain_params[:, 2*m.num_features:]
 
@@ -223,7 +223,7 @@ class ClassModelEncoder(nn.Module):
                                        pad_type=pad_type)]
             dim *= 2
         for i in range(downs - 2):
-            self.model += [Conv2dBlock(dim, dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [InceptionBlock(dim, dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
@@ -245,7 +245,7 @@ class ContentEncoder(nn.Module):
                                    activation=activ,
                                    pad_type=pad_type)]
         for i in range(downs):
-            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]

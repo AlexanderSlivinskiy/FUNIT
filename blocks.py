@@ -7,6 +7,8 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 import math
+from globalConstants import GlobalConstants
+import skimage.io as sk
 
 inplace_bool = False
 
@@ -59,10 +61,10 @@ class ActFirstResBlock(nn.Module):
         self.fin = fin
         self.fout = fout
         self.fhid = min(fin, fout) if fhid is None else fhid
-        self.conv_0 = Conv2dBlock(self.fin, self.fhid, 3, 1,
+        self.conv_0 = InceptionBlock(self.fin, self.fhid, 3, 1,
                                   padding=1, pad_type='reflect', norm=norm,
                                   activation=activation, activation_first=True)
-        self.conv_1 = Conv2dBlock(self.fhid, self.fout, 3, 1,
+        self.conv_1 = InceptionBlock(self.fhid, self.fout, 3, 1,
                                   padding=1, pad_type='reflect', norm=norm,
                                   activation=activation, activation_first=True)
         if self.learned_shortcut:
@@ -195,10 +197,21 @@ class AdaptiveInstanceNorm2d(nn.Module):
         running_mean = self.running_mean.repeat(b)
         running_var = self.running_var.repeat(b)
         x_reshaped = x.contiguous().view(1, b * c, *x.size()[2:])
+
+        isHalf = (x_reshaped.dtype == torch.float16)
+        isHalfWeight = (self.weight.dtype == torch.float16)
+        if (isHalf):
+            x_reshaped = x_reshaped.float()
+            if (isHalfWeight): #Should never be called since initialized as float()
+                self.weight = self.weight.float()
+                self.bias = self.bias.float()
         out = F.batch_norm(
             x_reshaped, running_mean, running_var, self.weight, self.bias,
             True, self.momentum, self.eps)
-        return out.view(b, c, *x.size()[2:])
+        out = out.view(b, c, *x.size()[2:])
+        if (isHalf):
+            out = out.half()
+        return out
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + str(self.num_features) + ')'
@@ -264,7 +277,7 @@ class InceptionBlock(Conv2dBlock):
                 self.inceptionThreads.append(nn.Sequential(*conv))
 
     def forward(self, x, log=False):
-        #print("BLOCKS, INCEPTIONBLOCK: BE AWARE THAT THE CONV2DBLOCK DIDN'T PAD AS MUCH AS THIS ONE")        
+        #print("BLOCKS, INCEPTIONBLOCK: BE AWARE THAT THE CONV2DBLOCK DIDN'T PAD AS MUCH AS THIS ONE")
         if self.activation_first:
             if self.activation:
                 x = self.activation(x)
@@ -305,3 +318,48 @@ class ParallelConv2dBlock(nn.Module):
         l = self.left(x)
         r = self.right(x)
         return torch.cat((l,r), dim=1)
+
+class Printer(nn.Module):
+    def __init__(self, perma_save_counter = 10000, running_save_counter = 100):
+        super(Printer, self).__init__()
+
+        """
+        1. 
+        Think about how you to structure naming.
+        Best practice would be probably to hand to the inception layer the caller-class.
+            But what about ResBlock? They also would need to pass on this parameter
+            I don't really want to introduce new parameters that are not related to the Layer
+            Or you have some intermediate static class like globalsConstants that you mistreat for this
+        You also need some index if the same class creates various InceptionBlocks
+
+        2. 
+        Each x is a batch -> more than one pic. That should probably be different sequences
+        Or the same one in a grid way (which sounds like a lot of work)
+
+        3.
+        How to save something as a sequence lol
+
+        4.
+        What to do about others parallel Layers in the same Inception?
+        Do you want to depict them in the same sequence File or another one?
+        Probably we could also have one folder per InceptionBlock
+
+        """
+        self.name = "?"
+        
+        self.counter = 0
+        try:
+            self.outputPath = GlobalConstants.getOutputPath()
+        except:
+            print("produced an error")
+            self.outputPath = None
+        
+        self.perma_save_counter = perma_save_counter
+        self.running_save_counter = running_save_counter
+
+    def forward(self, x):
+        if counter%running_save_counter==0:
+            print("Leave Britney alone! This is not implemented!")
+
+
+        self.counter += 1

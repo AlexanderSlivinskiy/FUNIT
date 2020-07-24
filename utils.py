@@ -16,6 +16,7 @@ from data import ImageLabelFilelist, ImageLabelFilelistCustom
 import customTransforms
 from imgaug import augmenters as iaa
 from glob import glob
+import torch.nn.functional as F
 
 # Finds biggest 2^x such that 2^x < size
 def find_next_crop_size(size):
@@ -262,6 +263,9 @@ def make_result_folders(output_directory):
 
 def __write_images(im_outs, dis_img_n, file_name):
     im_outs = [images.expand(-1, 3, -1, -1) for images in im_outs]
+    if im_outs[0].shape != im_outs[1].shape:
+        im_outs[0] = F.pad(input=im_outs[0], pad=(2, 2, 2, 2), mode='constant', value=0)
+        im_outs[3] = F.pad(input=im_outs[3], pad=(2, 2, 2, 2), mode='constant', value=0)
     image_tensor = torch.cat([images[:dis_img_n] for images in im_outs], 0)
     image_grid = vutils.make_grid(image_tensor.data,
                                   nrow=dis_img_n, padding=0, normalize=True)
