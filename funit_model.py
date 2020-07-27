@@ -12,6 +12,8 @@ from networks import FewShotGen, GPPatchMcResDis
 from debugUtils import printCheckpoint, Debugger
 import torch.nn.functional as F
 
+import apex.amp as amp
+
 PREFIX = "funit_model.py"
 
 def recon_criterion(predict, target):
@@ -58,16 +60,23 @@ class FUNITModel(nn.Module):
             acc = 0.5 * (gacc_t + gacc_r)
             l_total = (hp['gan_w'] * l_adv + hp['r_w'] * l_x_rec + hp[
                 'fm_w'] * (l_c_rec + l_m_rec))
-            l_total.backward()
+            with amp.scale_loss(l_total, [self.gen_opt, self.dis_opt]) as scaled_loss:
+                scaled_loss.backward()
+            #l_total.backward()
             return l_total, l_adv, l_x_rec, l_c_rec, l_m_rec, acc
         elif mode == 'dis_update':
             xb.requires_grad_()
             l_real_pre, acc_r, resp_r = self.dis.calc_dis_real_loss(xb, lb)
             l_real = hp['gan_w'] * l_real_pre
-            l_real.backward(retain_graph=True)
+            with amp.scale_loss(l_real, [self.gen_opt, self.dis_opt]) as scaled_loss:
+                print("THIS IS THE POINT I WILL GIVE UP")
+                scaled_loss.backward(retain_graph=True)
+            #l_real.backward(retain_graph=True)
             l_reg_pre = self.dis.calc_grad2(resp_r, xb)
             l_reg = 10 * l_reg_pre
-            l_reg.backward()
+            with amp.scale_loss(l_reg, [self.gen_opt, self.dis_opt]) as scaled_loss:
+                scaled_loss.backward()
+            #l_reg.backward()
             with torch.no_grad():
                 c_xa = self.gen.enc_content(xa)
                 s_xb = self.gen.enc_class_model(xb)
@@ -75,7 +84,9 @@ class FUNITModel(nn.Module):
             l_fake_p, acc_f, resp_f = self.dis.calc_dis_fake_loss(xt.detach(),
                                                                   lb)
             l_fake = hp['gan_w'] * l_fake_p
-            l_fake.backward()
+            with amp.scale_loss(l_fake, [self.gen_opt, self.dis_opt]) as scaled_loss:
+                scaled_loss.backward()
+            #l_fake.backward()
             l_total = l_fake + l_real + l_reg
             acc = 0.5 * (acc_f + acc_r)
             return l_total, l_fake_p, l_real_pre, l_reg_pre, acc
@@ -137,3 +148,7 @@ class FUNITModel(nn.Module):
         c_xa_current = self.gen_test.enc_content(xa)
         xt_current = self.gen_test.decode(c_xa_current, s_xb_current)
         return xt_current
+
+    def setOptimizersForApex(self, gen_opt, dis_opt):
+        self.gen_opt = gen_opt
+        self.dis_opt = dis_opt

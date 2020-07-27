@@ -34,7 +34,7 @@ class ResBlock(nn.Module):
 
         #-------------NOTE_THIS!!---------------#
 
-        
+        #InceptionBlock =Conv2dBlock
         model += [InceptionBlock(dim, dim, 3, 1, 1,
                               norm=norm,
                               activation=activation,
@@ -61,10 +61,10 @@ class ActFirstResBlock(nn.Module):
         self.fin = fin
         self.fout = fout
         self.fhid = min(fin, fout) if fhid is None else fhid
-        self.conv_0 = InceptionBlock(self.fin, self.fhid, 3, 1,
+        self.conv_0 = Conv2dBlock(self.fin, self.fhid, 3, 1,
                                   padding=1, pad_type='reflect', norm=norm,
                                   activation=activation, activation_first=True)
-        self.conv_1 = InceptionBlock(self.fhid, self.fout, 3, 1,
+        self.conv_1 = Conv2dBlock(self.fhid, self.fout, 3, 1,
                                   padding=1, pad_type='reflect', norm=norm,
                                   activation=activation, activation_first=True)
         if self.learned_shortcut:
@@ -198,19 +198,19 @@ class AdaptiveInstanceNorm2d(nn.Module):
         running_var = self.running_var.repeat(b)
         x_reshaped = x.contiguous().view(1, b * c, *x.size()[2:])
 
-        isHalf = (x_reshaped.dtype == torch.float16)
-        isHalfWeight = (self.weight.dtype == torch.float16)
-        if (isHalf):
+        isNotFloat = (x_reshaped.dtype != torch.float32)
+        isNotFloatWeight = (self.weight.dtype != torch.float32)
+        if (isNotFloat):
             x_reshaped = x_reshaped.float()
-            if (isHalfWeight): #Should never be called since initialized as float()
+            if (isNotFloatWeight): #Should never be called since initialized as float()
                 self.weight = self.weight.float()
                 self.bias = self.bias.float()
         out = F.batch_norm(
             x_reshaped, running_mean, running_var, self.weight, self.bias,
             True, self.momentum, self.eps)
         out = out.view(b, c, *x.size()[2:])
-        if (isHalf):
-            out = out.half()
+        if (isNotFloat):
+            out = GlobalConstants.setTensorToPrecision(out)
         return out
 
     def __repr__(self):

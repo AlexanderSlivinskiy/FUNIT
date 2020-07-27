@@ -20,7 +20,7 @@ from blocks import AdaptiveInstanceNorm2d
 from torch.nn import BatchNorm1d, BatchNorm2d
 
 import torch.backends.cudnn as cudnn
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
+os.environ['CUDA_VISIBLE_DEVICES'] = '0' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
@@ -51,6 +51,8 @@ max_iter = config['max_iter']
 # Override the batch size if specified.
 if opts.batch_size != 0:
     config['batch_size'] = opts.batch_size
+
+GlobalConstants.setPrecision(config['precision'])
 
 trainer = Trainer(config)
 trainer.cuda()
@@ -83,12 +85,15 @@ iterations = trainer.resume(checkpoint_directory,
                             hp=config,
                             multigpus=opts.multigpus) if opts.resume else 0
 
-trainer.model.half()  # convert to half precision
-for layer in trainer.model.modules():
-    if isinstance(layer, AdaptiveInstanceNorm2d):
-        layer.float()
-    elif isinstance(layer, BatchNorm2d):
-        layer.float()
+"""
+if (GlobalConstants.getPrecision() == torch.float16):
+    trainer.model.half()  # convert to half precision
+    for layer in trainer.model.modules():
+        if isinstance(layer, AdaptiveInstanceNorm2d):
+            layer.float()
+        elif isinstance(layer, BatchNorm2d):
+            layer.float()
+"""
 
 #trainer.summary(None)
 while True:

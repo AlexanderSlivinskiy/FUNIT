@@ -19,7 +19,7 @@ KERNEL_SIZE_4 = 3
 KERNEL_SIZE_5 = 3
 
 #Conv2dBlock = InceptionBlock
-
+#InceptionBlock = Conv2dBlock
 
 def assign_adain_params(adain_params, model):
     # assign the adain_params to the AdaIN layers in model
@@ -45,6 +45,9 @@ def get_num_adain_params(model):
 class GPPatchMcResDis(nn.Module):
     def __init__(self, hp):
         super(GPPatchMcResDis, self).__init__()
+
+        #InceptionBlock = Conv2dBlock
+
         assert hp['n_res_blks'] % 2 == 0, 'n_res_blk must be multiples of 2'
         self.n_layers = hp['n_res_blks'] // 2
         nf = hp['nf']
@@ -211,6 +214,7 @@ class FewShotGen(nn.Module):
 class ClassModelEncoder(nn.Module):
     def __init__(self, downs, ind_im, dim, latent_dim, norm, activ, pad_type):
         super(ClassModelEncoder, self).__init__()
+        #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [InceptionBlock(ind_im, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
@@ -239,17 +243,19 @@ class ClassModelEncoder(nn.Module):
 class ContentEncoder(nn.Module):
     def __init__(self, downs, n_res, input_dim, dim, norm, activ, pad_type):
         super(ContentEncoder, self).__init__()
+        #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [InceptionBlock(input_dim, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
                                    activation=activ,
                                    pad_type=pad_type)]
+        
         for i in range(downs):
-            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
-            dim *= 2
+            dim *= 2        
         self.model += [ResBlocks(n_res, dim,
                                  norm=norm,
                                  activation=activ,
@@ -264,7 +270,7 @@ class ContentEncoder(nn.Module):
 class Decoder(nn.Module):
     def __init__(self, ups, n_res, dim, out_dim, res_norm, activ, pad_type):
         super(Decoder, self).__init__()
-
+        #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [ResBlocks(n_res, dim, res_norm,
                                  activ, pad_type=pad_type)]
@@ -279,7 +285,10 @@ class Decoder(nn.Module):
                                    norm='none',
                                    activation='tanh',
                                    pad_type=pad_type)]
+
         self.model = nn.Sequential(*self.model)
+
+
 
     def forward(self, x):
         return self.model(x)

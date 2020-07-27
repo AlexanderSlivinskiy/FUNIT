@@ -15,7 +15,8 @@ import numpy as np
 
 
 def default_loader(path):
-    return Image.open(path).convert('RGB')
+    pic = Image.open(path).convert('RGB')
+    return pic
 
 def default_loader_custom(path):
     pic = imread(path)
@@ -28,6 +29,14 @@ def default_loader_custom(path):
     elif class_name == "dp":
         pic = color.rgba2rgb(pic)
         pic = color.rgb2grey(pic)
+        
+    if (pic.dtype == 'uint16'):
+        #print("anything else than double!!")
+        if (pic.max()<32768):
+            pic = pic.astype('int16')
+        else:
+            pic = pic.astype('int32')
+    pic = pic.astype('double')
 
     if (len(pic.shape)==2):
         pic = pic.reshape((pic.shape[0], pic.shape[1],1))
@@ -111,10 +120,12 @@ class ImageLabelFilelistCustom(data.Dataset):
                 impath = os.path.join(path, d)
                 impathTIF = os.path.join(impath, "*.tif")
                 impathPNG = os.path.join(impath, "*.png")
-                impathDIB = os.path.join(impath, "*.dib")
+                impathDIB = os.path.join(impath, "*.dib") #Should be DIB but we don't support it right now
+                impathJPG = os.path.join(impath, "*.jpg")
                 self.imlist += glob(impathTIF)
                 self.imlist += glob(impathPNG)
                 self.imlist += glob(impathDIB)
+                self.imlist += glob(impathJPG)
         self.imgs = [(im_path, self.class_to_idx[im_path.split('/')[-2]]) for im_path in self.imlist]
 
         self.root = root #Do I need this?

@@ -1,5 +1,7 @@
 import math
 from torch.optim.optimizer import Optimizer
+#COPIED FROM: https://gist.github.com/ajbrock/075c0ca4036dc4d8581990a6e76e07a3
+
 
 # This version of Adam keeps an fp32 copy of the parameters and 
 # does all of the parameter updates in fp32, while still doing the

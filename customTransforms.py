@@ -2,6 +2,7 @@ from skimage.exposure import rescale_intensity
 import torch
 import numpy as np
 from imgaug import augmenters as iaa
+from globalConstants import GlobalConstants
 
 
 def transformTo3Tuple(image):
@@ -64,18 +65,20 @@ class RescaleToOneOne(object):
 class ToTensor(object):
     
     def __call__(self, pic):
+        """
         if (pic.dtype == 'uint16'):
+            print("anything else than double!!")
             if (pic.max()<32768):
                 pic = pic.astype('int16')
             else:
                 pic = pic.astype('int32')
+        """
 
         if (pic.shape[2]==3):
             pic=pic.transpose()
 
         tensor = torch.from_numpy(pic.copy())
-        #tensor = tensor.float()
-        tensor = tensor.half()
+        #tensor = GlobalConstants.setTensorToPrecision(tensor)
         return tensor
 
     def __repr__(self):

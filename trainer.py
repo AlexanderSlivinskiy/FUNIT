@@ -15,7 +15,9 @@ from customOptimizers import Adam16
 
 from funit_model import FUNITModel
 from torchvision import models
+from globalConstants import GlobalConstants
 
+import apex.amp as amp
 
 from torchsummary import summary
 from tensorboardX import SummaryWriter
@@ -38,12 +40,40 @@ class Trainer(nn.Module):
         lr_dis = cfg['lr_dis']
         dis_params = list(self.model.dis.parameters())
         gen_params = list(self.model.gen.parameters())
-        self.dis_opt = Adam16(
-            [p for p in dis_params if p.requires_grad],
-            lr=lr_gen, weight_decay=cfg['weight_decay'])
-        self.gen_opt = Adam16(
-            [p for p in gen_params if p.requires_grad],
-            lr=lr_dis, weight_decay=cfg['weight_decay'])
+        
+        if (GlobalConstants.precision == torch.float16):
+            self.dis_opt = torch.optim.Adam(
+                [p for p in dis_params if p.requires_grad],
+                lr=lr_gen, weight_decay=cfg['weight_decay'], eps=1e-4)
+            self.gen_opt = torch.optim.Adam(
+                [p for p in gen_params if p.requires_grad],
+                lr=lr_dis, weight_decay=cfg['weight_decay'], eps=1e-4)
+            """
+            self.dis_opt = Adam16(
+                [p for p in dis_params if p.requires_grad],
+                lr=lr_gen, weight_decay=cfg['weight_decay'], eps=1e-4)
+            self.gen_opt = Adam16(
+                [p for p in gen_params if p.requires_grad],
+                lr=lr_dis, weight_decay=cfg['weight_decay'], eps=1e-4)
+            """
+        else:
+            self.dis_opt = torch.optim.RMSprop(
+                [p for p in dis_params if p.requires_grad],
+                lr=lr_gen, weight_decay=cfg['weight_decay'])
+            self.gen_opt = torch.optim.RMSprop(
+                [p for p in gen_params if p.requires_grad],
+                lr=lr_dis, weight_decay=cfg['weight_decay'])
+
+        self.model.cuda()
+        # APEX initialization
+        opt_level = 'O1'
+        self.model, [self.dis_opt, self.gen_opt] = amp.initialize(
+            self.model, [self.dis_opt, self.gen_opt], opt_level=opt_level, num_losses=4,
+            verbosity=1 #For now
+            )
+
+        self.model.setOptimizersForApex(self.dis_opt, self.gen_opt)
+
         self.dis_scheduler = get_scheduler(self.dis_opt, cfg)
         self.gen_scheduler = get_scheduler(self.gen_opt, cfg)
         self.apply(weights_init(cfg['init']))
