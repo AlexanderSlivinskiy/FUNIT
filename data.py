@@ -48,6 +48,7 @@ def default_loader_custom(path):
         #print("**************3 IS BACK: ",pic.shape)
         pic = pic.transpose() #Not sure this is correct to get from (y,x,3) to (3,y,x)
 
+    #=============SCALING======================
     shorter_side = min(pic.shape[0], pic.shape[1])
     if (class_name == "Hela"):
         shorter_side = shorter_side//8
@@ -59,6 +60,7 @@ def default_loader_custom(path):
         shorter_side = int(shorter_side/2)
     scale = iaa.Resize({"shorter-side":shorter_side, "longer-side":"keep-aspect-ratio"}).augment_image
     pic = scale(pic)
+
     return pic
 
 def get_class(path):
@@ -133,14 +135,8 @@ class ImageLabelFilelistCustom(data.Dataset):
         self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}
         for d in self.classes:
                 impath = os.path.join(path, d)
-                impathTIF = os.path.join(impath, "*.tif")
-                impathPNG = os.path.join(impath, "*.png")
-                impathDIB = os.path.join(impath, "*.dib") #Should be DIB but we don't support it right now
-                impathJPG = os.path.join(impath, "*.jpg")
-                self.imlist += glob(impathTIF)
-                self.imlist += glob(impathPNG)
-                self.imlist += glob(impathDIB)
-                self.imlist += glob(impathJPG)
+                self.imlist += self.getImgs(impath, "*.tif") + self.getImgs(impath, "*.TIF") + self.getImgs(impath, "*.png") + self.getImgs(impath, "*.jpg")
+                
         self.imgs = [(im_path, self.class_to_idx[im_path.split('/')[-2]]) for im_path in self.imlist]
 
         self.root = root #Do I need this?
@@ -170,3 +166,6 @@ class ImageLabelFilelistCustom(data.Dataset):
 
     def __len__(self):
         return len(self.imgs)
+
+    def getImgs(self, pth, dataType):
+        return glob(os.path.join(pth, dataType))

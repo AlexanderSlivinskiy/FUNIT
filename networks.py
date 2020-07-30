@@ -92,32 +92,9 @@ class GPPatchMcResDis(nn.Module):
 
     def calc_dis_real_loss(self, input_real, input_label):
         debug = Debugger(self.calc_dis_real_loss, self, PREFIX)
-        #debug.printCheckpoint() #0
-        #print("FORWARD: ",input_real.shape, input_label)
         resp_real, gan_feat = self.forward(input_real, input_label)
-        """
-
-        #print(resp_real.shape)
-        #print(gan_feat.cpu)
-        debug.printCheckpoint() #1
-        a = resp_real.size()
-        debug.printCheckpoint() #2
-        b = np.prod(a)
-        debug.printCheckpoint() #3
-        c = torch.tensor(b)
-        debug.printCheckpoint() #4
-        d = c.float()
-        #print(d.shape)
-        debug.printCheckpoint() #5
-        #exit()
-        e = d.cuda()
-        total_count=d
-        debug.printCheckpoint() #6
-
-        """
         total_count = torch.tensor(np.prod(resp_real.size()),
                                    dtype=torch.float).cuda()
-        #debug.printCheckpoint()
         real_loss = torch.nn.ReLU()(1.0 - resp_real).mean()
         correct_count = (resp_real >= 0).sum()
         real_accuracy = correct_count.type_as(real_loss) / total_count
@@ -221,7 +198,7 @@ class ClassModelEncoder(nn.Module):
                                    activation=activ,
                                    pad_type=pad_type)]
         for i in range(2):
-            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
@@ -251,10 +228,19 @@ class ContentEncoder(nn.Module):
                                    pad_type=pad_type)]
         
         for i in range(downs):
-            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 1,#2, 
+                                        1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
+            if (i == downs-1):
+                self.model += [
+                    nn.MaxPool2d(KERNEL_SIZE_4, 2, padding=1)
+                ]
+            else:
+                self.model += [
+                    nn.MaxPool2d(KERNEL_SIZE_4, 2, padding=0)
+                ]
             dim *= 2        
         self.model += [ResBlocks(n_res, dim,
                                  norm=norm,
@@ -274,10 +260,11 @@ class Decoder(nn.Module):
         #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [ResBlocks(n_res, dim, res_norm,
-                                 activ, pad_type=pad_type)]
+                                 activ, pad_type=pad_type,
+                                 inception=False)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
-                           Conv2dBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
+                           InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
                                        norm='in',
                                        activation=activ,
                                        pad_type=pad_type)]

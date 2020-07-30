@@ -32,7 +32,7 @@ gen:
 dis:
   nf: 64                      # base number of filters
   n_res_blks: 10              # number of residual blocks in the discriminator
-  num_classes: 11            # number of classes in the training set
+  num_classes: 8            # number of classes in the training set
   input_nc: 3
 
 #img options

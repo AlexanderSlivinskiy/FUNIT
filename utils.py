@@ -270,6 +270,10 @@ def __write_images(im_outs, dis_img_n, file_name):
         diff_tup = (diff, diff, diff, diff)
         im_outs[0] = F.pad(input=im_outs[0], pad=diff_tup, mode='constant', value=0)
         im_outs[3] = F.pad(input=im_outs[3], pad=diff_tup, mode='constant', value=0)
+
+    for i in range(len(im_outs)):
+        if im_outs[i].dtype!=torch.float16:
+            im_outs[i] = im_outs[i].half()
     image_tensor = torch.cat([images[:dis_img_n] for images in im_outs], 0)
     image_grid = vutils.make_grid(image_tensor.data,
                                   nrow=dis_img_n, padding=0, normalize=True)

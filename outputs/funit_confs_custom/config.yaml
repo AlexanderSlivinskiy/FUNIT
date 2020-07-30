@@ -5,7 +5,7 @@
 # logger options
 image_save_iter: 2500         # How often do you want to save output images during training
 image_display_iter: 100       # How often do you want to display output images during training
-snapshot_save_iter: 1      # How often do you want to save trained models
+snapshot_save_iter: 5000      # How often do you want to save trained models
 log_iter: 1                   # How often do you want to log the training stats
 
 # optimization options
@@ -32,7 +32,7 @@ gen:
 dis:
   nf: 64                      # base number of filters
   n_res_blks: 10              # number of residual blocks in the discriminator
-  num_classes: 11            # number of classes in the training set
+  num_classes: 8            # number of classes in the training set
   input_nc: 3
 
 #img options
