@@ -139,7 +139,8 @@ while True:
                                   'test_%s_%02d' % (key_str, t))
 
         if (iterations + 1) % config['snapshot_save_iter'] == 0:
-            trainer.save(checkpoint_directory, iterations, opts.multigpus)
+            trainer.save_apex(checkpoint_directory, iterations, opts.multigpus)
+            #trainer.save(checkpoint_directory, iterations, opts.multigpus)
             print('Saved model at iteration %d' % (iterations + 1))
 
         iterations += 1

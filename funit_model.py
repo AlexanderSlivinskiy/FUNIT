@@ -18,8 +18,6 @@ import apex.amp as amp
 PREFIX = "funit_model.py"
 
 def recon_criterion(predict, target):
-    if (target.dtype != torch.float32):
-        target = target.float()
     if (target.shape[-1]!=predict.shape[-1]):
         print("Funit_model.py recon_criterion: SHAPE OF INPUT", target.shape, "AND OF PREDICTION", predict.shape, "AREN'T EQUAL!")
         predict = F.interpolate(predict, target.shape[-1])
@@ -58,7 +56,7 @@ class FUNITModel(nn.Module):
                                       xa_gan_feat.mean(3).mean(2))
             l_m_rec = recon_criterion(xt_gan_feat.mean(3).mean(2),
                                       xb_gan_feat.mean(3).mean(2))
-            l_x_rec = recon_criterion(xr, xa)
+            l_x_rec = recon_criterion(xr, xa.float())
             l_adv = 0.5 * (l_adv_t + l_adv_r)
             acc = 0.5 * (gacc_t + gacc_r)
             l_total = (hp['gan_w'] * l_adv + hp['r_w'] * l_x_rec + hp[
