@@ -70,6 +70,7 @@ class Trainer(nn.Module):
             opt_level = 'O1'
             self.model, [self.dis_opt, self.gen_opt] = amp.initialize(
                 self.model, [self.dis_opt, self.gen_opt], opt_level=opt_level, num_losses=4,
+                max_loss_scale=1e-8,
                 verbosity=1 #For now
                 )
             self.model.setOptimizersForApex(self.dis_opt, self.gen_opt)

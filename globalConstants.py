@@ -16,7 +16,7 @@ class GlobalConstants():
             precision = torch.float16
         elif (precision == "float32"):
             precision = torch.float32
-        elif (precision == "float16_APEX"):
+        elif (precision.upper() == "float16_APEX".upper()):
             precision = torch.float16
             GlobalConstants.usingApex = True
             print("Using APEX")

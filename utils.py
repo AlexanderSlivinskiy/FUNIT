@@ -14,9 +14,9 @@ import torchvision.utils as vutils
 
 from data import ImageLabelFilelist, ImageLabelFilelistCustom
 import customTransforms
-from imgaug import augmenters as iaa
 from glob import glob
 import torch.nn.functional as F
+from imgaug import augmenters as iaa
 
 # Finds biggest 2^x such that 2^x < size
 def find_next_crop_size(size):

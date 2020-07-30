@@ -18,6 +18,8 @@ import apex.amp as amp
 PREFIX = "funit_model.py"
 
 def recon_criterion(predict, target):
+    if (target.dtype != torch.float32):
+        target = target.float()
     if (target.shape[-1]!=predict.shape[-1]):
         print("Funit_model.py recon_criterion: SHAPE OF INPUT", target.shape, "AND OF PREDICTION", predict.shape, "AREN'T EQUAL!")
         predict = F.interpolate(predict, target.shape[-1])
