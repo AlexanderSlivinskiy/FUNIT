@@ -132,6 +132,10 @@ class Trainer(nn.Module):
 
         self.dis_scheduler = get_scheduler(self.dis_opt, hp, iterations)
         self.gen_scheduler = get_scheduler(self.gen_opt, hp, iterations)
+
+        if (GlobalConstants.usingApex):
+            state_dict = torch.load(os.path.join(checkpoint_dir, 'amp.pt'))
+            amp.load_state_dict(state_dict['amp'])
         print('Resume from iteration %d' % iterations)
         return iterations
 
@@ -146,21 +150,9 @@ class Trainer(nn.Module):
         torch.save({'dis': this_model.dis.state_dict()}, dis_name)
         torch.save({'gen': self.gen_opt.state_dict(),
                     'dis': self.dis_opt.state_dict()}, opt_name)
-
-
-    def save_apex(self, snapshot_dir, iterations, multigpus):
-        this_model = self.model.module if multigpus else self.model
-        # Save generators, discriminators, and optimizers
-        gen_name = os.path.join(snapshot_dir, 'gen_%08d.pt' % (iterations + 1))
-        dis_name = os.path.join(snapshot_dir, 'dis_%08d.pt' % (iterations + 1))
-        amp_name = os.path.join(snapshot_dir, 'amp_%08d.pt' % (iterations + 1))
-        opt_name = os.path.join(snapshot_dir, 'optimizer.pt')
-        torch.save({'gen': this_model.gen.state_dict(),
-                    'gen_test': this_model.gen_test.state_dict()}, gen_name)
-        torch.save({'dis': this_model.dis.state_dict()}, dis_name)
-        torch.save({'gen': self.gen_opt.state_dict(),
-                    'dis': self.dis_opt.state_dict()}, opt_name)
-        torch.save({'amp': amp.state_dict()}, amp_name)
+        if (GlobalConstants.usingApex):
+            amp_name = os.path.join(snapshot_dir, "amp.pt")
+            torch.save({'amp': amp.state_dict()}, amp_name)
 
     def load_ckpt(self, ckpt_name):
         state_dict = torch.load(ckpt_name)

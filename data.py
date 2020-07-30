@@ -13,6 +13,7 @@ import skimage.color as color
 from skimage.util import invert
 import numpy as np
 from globalConstants import GlobalConstants
+from imgaug import augmenters as iaa
 
 
 def default_loader(path):
@@ -25,7 +26,7 @@ def default_loader_custom(path):
     if class_name == "malaria":
         pic = color.rgb2grey(pic)
         pic = invert(pic)
-    elif class_name == "Human_HT29_colon-cancer":
+    elif class_name == "Human_HT29_Colon_Cancer_DNA":
         pic = color.rgb2grey(pic)
     elif class_name == "dp":
         pic = color.rgba2rgb(pic)
@@ -46,6 +47,18 @@ def default_loader_custom(path):
     if (pic.shape[0]==3):
         #print("**************3 IS BACK: ",pic.shape)
         pic = pic.transpose() #Not sure this is correct to get from (y,x,3) to (3,y,x)
+
+    shorter_side = min(pic.shape[0], pic.shape[1])
+    if (class_name == "Hela"):
+        shorter_side = shorter_side//8
+    if (class_name == "mSar"):
+        shorter_side = shorter_side//6
+    if (class_name == "malaria"):
+        shorter_side = shorter_side//4
+    if (class_name == "Human_Hepatocyte_Murine_Fibroblast"):
+        shorter_side = int(shorter_side/2)
+    scale = iaa.Resize({"shorter-side":shorter_side, "longer-side":"keep-aspect-ratio"}).augment_image
+    pic = scale(pic)
     return pic
 
 def get_class(path):

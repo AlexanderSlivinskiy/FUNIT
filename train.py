@@ -73,7 +73,7 @@ test_class_loader = loaders[3]
 
 # Setup logger and output folders
 model_name = os.path.splitext(os.path.basename(opts.config))[0]
-logs_path = make_log_folder("../FUNIT_GPU0/")
+logs_path = make_log_folder("./")
 train_writer = SummaryWriter(
     os.path.join(logs_path, model_name))
 output_directory = os.path.join(opts.output_path + "/outputs", model_name)
@@ -139,8 +139,7 @@ while True:
                                   'test_%s_%02d' % (key_str, t))
 
         if (iterations + 1) % config['snapshot_save_iter'] == 0:
-            trainer.save_apex(checkpoint_directory, iterations, opts.multigpus)
-            #trainer.save(checkpoint_directory, iterations, opts.multigpus)
+            trainer.save(checkpoint_directory, iterations, opts.multigpus)
             print('Saved model at iteration %d' % (iterations + 1))
 
         iterations += 1
