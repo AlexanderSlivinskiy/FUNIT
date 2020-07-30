@@ -12,6 +12,7 @@ from skimage.io import imread
 import skimage.color as color
 from skimage.util import invert
 import numpy as np
+from globalConstants import GlobalConstants
 
 
 def default_loader(path):
@@ -36,7 +37,8 @@ def default_loader_custom(path):
             pic = pic.astype('int16')
         else:
             pic = pic.astype('int32')
-    pic = pic.astype('double')
+    if (GlobalConstants.usingApex):
+        pic = pic.astype('float')
 
     if (len(pic.shape)==2):
         pic = pic.reshape((pic.shape[0], pic.shape[1],1))

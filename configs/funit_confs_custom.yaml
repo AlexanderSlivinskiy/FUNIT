@@ -48,7 +48,7 @@ output_nc: 1
 num_workers: 4
 batch_size: 8
 new_size:   0                 # first resize the shortest image side to this size
-precision: float16_APEX
+precision: float32
 crop_image_height: 0          # random crop image of this height
 crop_image_width: 0           # random crop image of this width
 data_folder_train: ../../../scratch/bunk/cell2cell/test/ #Sasha: I know this should say "train", but right now I'm having it in "test"

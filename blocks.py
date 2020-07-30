@@ -13,14 +13,15 @@ import skimage.io as sk
 inplace_bool = False
 
 class ResBlocks(nn.Module):
-    def __init__(self, num_blocks, dim, norm, activation, pad_type):
+    def __init__(self, num_blocks, dim, norm, activation, pad_type, inception=False):
         super(ResBlocks, self).__init__()
         self.model = []
         for i in range(num_blocks):
             self.model += [ResBlock(dim,
                                     norm=norm,
                                     activation=activation,
-                                    pad_type=pad_type)]
+                                    pad_type=pad_type,
+                                    inception=inception)]
         self.model = nn.Sequential(*self.model)
 
     def forward(self, x):
@@ -28,18 +29,25 @@ class ResBlocks(nn.Module):
 
 
 class ResBlock(nn.Module):
-    def __init__(self, dim, norm='in', activation='relu', pad_type='zero'):
+    def __init__(self, dim, norm='in', activation='relu', pad_type='zero', inception=False):
         super(ResBlock, self).__init__()
         model = []        
 
-        #-------------NOTE_THIS!!---------------#
-
-        #InceptionBlock =Conv2dBlock
-        model += [InceptionBlock(dim, dim, 3, 1, 1,
+        if (inception):
+            model += [InceptionBlock(dim, dim, 3, 1, 1,
                               norm=norm,
                               activation=activation,
                               pad_type=pad_type)]
-        model += [InceptionBlock(dim, dim, 3, 1, 1,
+            model += [InceptionBlock(dim, dim, 3, 1, 1,
+                              norm=norm,
+                              activation='none',
+                              pad_type=pad_type)]
+        else:
+            model += [Conv2dBlock(dim, dim, 3, 1, 1,
+                              norm=norm,
+                              activation=activation,
+                              pad_type=pad_type)]
+            model += [Conv2dBlock(dim, dim, 3, 1, 1,
                               norm=norm,
                               activation='none',
                               pad_type=pad_type)]

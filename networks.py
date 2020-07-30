@@ -52,7 +52,7 @@ class GPPatchMcResDis(nn.Module):
         self.n_layers = hp['n_res_blks'] // 2
         nf = hp['nf']
         input_channels=hp['input_nc']
-        cnn_f = [InceptionBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
+        cnn_f = [Conv2dBlock(input_channels, nf, KERNEL_SIZE_7, 1, 3,
                              pad_type='reflect',
                              norm='none',
                              activation='none')]
@@ -221,13 +221,13 @@ class ClassModelEncoder(nn.Module):
                                    activation=activ,
                                    pad_type=pad_type)]
         for i in range(2):
-            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
             dim *= 2
         for i in range(downs - 2):
-            self.model += [InceptionBlock(dim, dim, KERNEL_SIZE_4, 2, 1,
+            self.model += [Conv2dBlock(dim, dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
@@ -259,7 +259,8 @@ class ContentEncoder(nn.Module):
         self.model += [ResBlocks(n_res, dim,
                                  norm=norm,
                                  activation=activ,
-                                 pad_type=pad_type)]
+                                 pad_type=pad_type,
+                                 inception=True)]
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
@@ -276,7 +277,7 @@ class Decoder(nn.Module):
                                  activ, pad_type=pad_type)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
-                           InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
+                           Conv2dBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
                                        norm='in',
                                        activation=activ,
                                        pad_type=pad_type)]

@@ -20,7 +20,7 @@ from blocks import AdaptiveInstanceNorm2d
 from torch.nn import BatchNorm1d, BatchNorm2d
 
 import torch.backends.cudnn as cudnn
-os.environ['CUDA_VISIBLE_DEVICES'] = '0' #"0,1" for the hard stuff, "2" for your everyday bread and butter
+os.environ['CUDA_VISIBLE_DEVICES'] = '1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
@@ -73,7 +73,7 @@ test_class_loader = loaders[3]
 
 # Setup logger and output folders
 model_name = os.path.splitext(os.path.basename(opts.config))[0]
-logs_path = make_log_folder(".")
+logs_path = make_log_folder("../FUNIT_GPU0/")
 train_writer = SummaryWriter(
     os.path.join(logs_path, model_name))
 output_directory = os.path.join(opts.output_path + "/outputs", model_name)
@@ -85,15 +85,15 @@ iterations = trainer.resume(checkpoint_directory,
                             hp=config,
                             multigpus=opts.multigpus) if opts.resume else 0
 
-"""
-if (GlobalConstants.getPrecision() == torch.float16):
+
+if (GlobalConstants.getPrecision() == torch.float16 and (not GlobalConstants.usingApex)):
     trainer.model.half()  # convert to half precision
     for layer in trainer.model.modules():
         if isinstance(layer, AdaptiveInstanceNorm2d):
             layer.float()
         elif isinstance(layer, BatchNorm2d):
             layer.float()
-"""
+
 
 #trainer.summary(None)
 while True:

@@ -44,10 +44,10 @@ class Trainer(nn.Module):
         if (GlobalConstants.precision == torch.float16):
             self.dis_opt = torch.optim.Adam(
                 [p for p in dis_params if p.requires_grad],
-                lr=lr_gen, weight_decay=cfg['weight_decay'], eps=1e-4)
+                lr=lr_gen, weight_decay=cfg['weight_decay'])
             self.gen_opt = torch.optim.Adam(
                 [p for p in gen_params if p.requires_grad],
-                lr=lr_dis, weight_decay=cfg['weight_decay'], eps=1e-4)
+                lr=lr_dis, weight_decay=cfg['weight_decay'])
             """
             self.dis_opt = Adam16(
                 [p for p in dis_params if p.requires_grad],
@@ -57,22 +57,22 @@ class Trainer(nn.Module):
                 lr=lr_dis, weight_decay=cfg['weight_decay'], eps=1e-4)
             """
         else:
-            self.dis_opt = torch.optim.RMSprop(
+            self.dis_opt = torch.optim.Adam(
                 [p for p in dis_params if p.requires_grad],
                 lr=lr_gen, weight_decay=cfg['weight_decay'])
-            self.gen_opt = torch.optim.RMSprop(
+            self.gen_opt = torch.optim.Adam(
                 [p for p in gen_params if p.requires_grad],
                 lr=lr_dis, weight_decay=cfg['weight_decay'])
 
         self.model.cuda()
         # APEX initialization
-        opt_level = 'O1'
-        self.model, [self.dis_opt, self.gen_opt] = amp.initialize(
-            self.model, [self.dis_opt, self.gen_opt], opt_level=opt_level, num_losses=4,
-            verbosity=1 #For now
-            )
-
-        self.model.setOptimizersForApex(self.dis_opt, self.gen_opt)
+        if (GlobalConstants.usingApex):
+            opt_level = 'O1'
+            self.model, [self.dis_opt, self.gen_opt] = amp.initialize(
+                self.model, [self.dis_opt, self.gen_opt], opt_level=opt_level, num_losses=4,
+                verbosity=1 #For now
+                )
+            self.model.setOptimizersForApex(self.dis_opt, self.gen_opt)
 
         self.dis_scheduler = get_scheduler(self.dis_opt, cfg)
         self.gen_scheduler = get_scheduler(self.gen_opt, cfg)

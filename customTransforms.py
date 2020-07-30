@@ -78,7 +78,8 @@ class ToTensor(object):
             pic=pic.transpose()
 
         tensor = torch.from_numpy(pic.copy())
-        #tensor = GlobalConstants.setTensorToPrecision(tensor)
+        if (not GlobalConstants.usingApex):
+            tensor = GlobalConstants.setTensorToPrecision(tensor)
         return tensor
 
     def __repr__(self):
