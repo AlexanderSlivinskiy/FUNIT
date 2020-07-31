@@ -33,6 +33,9 @@ class ResBlock(nn.Module):
         super(ResBlock, self).__init__()
         model = []        
 
+        #REMOVE:
+        inception = False
+
         if (inception):
             model += [InceptionBlock(dim, dim, 3, 1, 1,
                               norm=norm,
@@ -179,6 +182,9 @@ class Conv2dBlock(nn.Module):
                 x = self.norm(x)
         else:
             x = self.pad(x)
+            if (x.dtype == torch.float64):
+                print("Type bug: Input is type: ", x.dtype)
+                x = x.float()
             x = self.conv(x)
             if self.norm:
                 x = self.norm(x)

@@ -19,7 +19,7 @@ KERNEL_SIZE_4 = 3
 KERNEL_SIZE_5 = 3
 
 #Conv2dBlock = InceptionBlock
-#InceptionBlock = Conv2dBlock
+InceptionBlock = Conv2dBlock
 
 def assign_adain_params(adain_params, model):
     # assign the adain_params to the AdaIN layers in model
@@ -227,6 +227,7 @@ class ContentEncoder(nn.Module):
                                    activation=activ,
                                    pad_type=pad_type)]
         
+        """
         for i in range(downs):
             self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 1,#2, 
                                         1,
@@ -241,7 +242,14 @@ class ContentEncoder(nn.Module):
                 self.model += [
                     nn.MaxPool2d(KERNEL_SIZE_4, 2, padding=0)
                 ]
-            dim *= 2        
+            dim *= 2       
+        """
+        for i in range(downs):
+            self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
+                                       norm=norm,
+                                       activation=activ,
+                                       pad_type=pad_type)]
+            dim *= 2 
         self.model += [ResBlocks(n_res, dim,
                                  norm=norm,
                                  activation=activ,
@@ -261,7 +269,7 @@ class Decoder(nn.Module):
         self.model = []
         self.model += [ResBlocks(n_res, dim, res_norm,
                                  activ, pad_type=pad_type,
-                                 inception=False)]
+                                 inception=True)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
                            InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
