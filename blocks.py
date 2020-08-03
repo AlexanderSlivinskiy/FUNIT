@@ -9,6 +9,7 @@ from torch import nn
 import math
 from globalConstants import GlobalConstants
 import skimage.io as sk
+from debugUtils import Debugger
 
 inplace_bool = False
 
@@ -120,11 +121,16 @@ class LinearBlock(nn.Module):
             assert 0, "Unsupported activation: {}".format(activation)
 
     def forward(self, x):
+        debug = Debugger(self.forward, self)
+        debug.checkForNaNandInf(x)
         out = self.fc(x)
+        debug.checkForNaNandInf(out)
         if self.norm:
             out = self.norm(out)
+            debug.checkForNaNandInf(out)
         if self.activation:
             out = self.activation(out)
+            debug.checkForNaNandInf(out)
         return out
 
 
@@ -172,22 +178,49 @@ class Conv2dBlock(nn.Module):
 
         self.conv = nn.Conv2d(in_dim, out_dim, ks, st, bias=self.use_bias)
 
+        self.register_backward_hook(self.printgradnorm)
+
     def forward(self, x):
+        debug = Debugger(self.forward, self)
+        debug.checkForNaNandInf(x)
         if self.activation_first:
             if self.activation:
                 x = self.activation(x)
+                debug.checkForNaNandInf(x)
             x = self.pad(x)
+            debug.checkForNaNandInf(x)
             x = self.conv(x)
+            debug.checkForNaNandInf(x)
             if self.norm:
                 x = self.norm(x)
+                debug.checkForNaNandInf(x)
         else:
             x = self.pad(x)
+            debug.checkForNaNandInf(x)
             x = self.conv(x)
+            debug.checkForNaNandInf(x)
             if self.norm:
                 x = self.norm(x)
+                debug.checkForNaNandInf(x)
             if self.activation:
                 x = self.activation(x)
+                debug.checkForNaNandInf(x)
         return x
+    
+    def printgradnorm(self, cls, grad_input, grad_output):
+        #print('Inside ' + cls.__class__.__name__ + ' backward')
+        #print('Inside class:' + cls.__class__.__name__)
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max())
+        #print(grad_output)
 
 
 class AdaptiveInstanceNorm2d(nn.Module):
@@ -202,6 +235,8 @@ class AdaptiveInstanceNorm2d(nn.Module):
         self.register_buffer('running_var', torch.ones(num_features))
 
     def forward(self, x):
+        debug = Debugger(self.forward, self)
+        debug.checkForNaNandInf(x)
         assert self.weight is not None and \
                self.bias is not None, "Please assign AdaIN weight first"
         b, c = x.size(0), x.size(1)
@@ -219,7 +254,9 @@ class AdaptiveInstanceNorm2d(nn.Module):
         out = F.batch_norm(
             x_reshaped, running_mean, running_var, self.weight, self.bias,
             True, self.momentum, self.eps)
+        debug.checkForNaNandInf(out)
         out = out.view(b, c, *x.size()[2:])
+        debug.checkForNaNandInf(out)
         if (isNotFloat):
             out = GlobalConstants.setTensorToPrecision(out)
         return out
