@@ -100,7 +100,7 @@ while True:
     for it, (co_data, cl_data) in enumerate(
             zip(train_content_loader, train_class_loader)):
         with Timer("Elapsed time in update: %f"):
-            #torch.autograd.set_detect_anomaly(True)
+            torch.autograd.set_detect_anomaly(True)
             d_acc = trainer.dis_update(co_data, cl_data, config)
             g_acc = trainer.gen_update(co_data, cl_data, config,
                                        opts.multigpus)

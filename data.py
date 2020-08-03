@@ -39,7 +39,10 @@ def default_loader_custom(path):
         else:
             pic = pic.astype('int32')
     if (GlobalConstants.usingApex):
-        pic = pic.astype('float')
+        pic = pic.astype('float32')
+
+    if (pic.dtype == 'float64'):
+        print("LOADING FLOAT64 IMAGE")
 
     if (len(pic.shape)==2):
         pic = pic.reshape((pic.shape[0], pic.shape[1],1))
