@@ -17,18 +17,37 @@ class Debugger():
         self.prefix = prefix
         self.index = 0
 
-    def printCheckpoint(self, content=""):
-        print("==="+self.prefix+" : "+self.className+"."+self.funcName+", checkpoint:",self.index,"===")
+    def printCheckpoint(self, function=None, content=""):
+        if function == None:
+            f = self.funcName
+        else:
+            f = function.__name__
+        print("==="+self.prefix+" : "+self.className+"."+f+", checkpoint:",self.index,"===")
         if (content != ""):
             print(content)
         self.index+=1
 
-    def checkForNaNandInf(self, tensor):
+    def checkForNaNandInf(self, tensor, msg=""):
         nan = torch.isnan(tensor)
         inf = torch.isinf(tensor)
         if (torch.sum(nan) != 0):
             print("INPUT IS NAN IN FORWARD PASS!!", torch.sum(nan))
-            self.printCheckpoint()
+            self.printCheckpoint(content=msg)
         if (torch.sum(inf) != 0):
             print("INPUT IS INF IN FORWARD PASS!!", torch.sum(inf))
-            self.printCheckpoint()
+            self.printCheckpoint(content=msg)
+            #print(tensor)
+
+    def printgradnorm(self, cls, grad_input, grad_output):
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max())
+        #print(grad_output)

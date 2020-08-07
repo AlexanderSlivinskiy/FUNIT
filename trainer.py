@@ -57,20 +57,20 @@ class Trainer(nn.Module):
                 lr=lr_dis, weight_decay=cfg['weight_decay'], eps=1e-4)
             """
         else:
-            self.dis_opt = torch.optim.Adam(
+            self.dis_opt = torch.optim.RMSprop(
                 [p for p in dis_params if p.requires_grad],
                 lr=lr_gen, weight_decay=cfg['weight_decay'])
-            self.gen_opt = torch.optim.Adam(
+            self.gen_opt = torch.optim.RMSprop(
                 [p for p in gen_params if p.requires_grad],
                 lr=lr_dis, weight_decay=cfg['weight_decay'])
 
         self.model.cuda()
         # APEX initialization
         if (GlobalConstants.usingApex):
-            opt_level = 'O1'
+            opt_level = 'O0'
             self.model, [self.dis_opt, self.gen_opt] = amp.initialize(
                 self.model, [self.dis_opt, self.gen_opt], opt_level=opt_level, num_losses=4,
-                max_loss_scale=2**8,
+                max_loss_scale=2**0,
                 verbosity=1 #For now
                 )
             self.model.setOptimizersForApex(self.dis_opt, self.gen_opt)
@@ -187,6 +187,7 @@ def get_scheduler(optimizer, hp, it=-1):
     if 'lr_policy' not in hp or hp['lr_policy'] == 'constant':
         scheduler = None  # constant scheduler
     elif hp['lr_policy'] == 'step':
+        print("I LIED! I DO HAVE A SCHEDULER!")
         scheduler = lr_scheduler.StepLR(optimizer, step_size=hp['step_size'],
                                         gamma=hp['gamma'], last_epoch=it)
     else:

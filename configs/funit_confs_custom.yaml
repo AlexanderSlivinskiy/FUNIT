@@ -11,8 +11,8 @@ log_iter: 1                   # How often do you want to log the training stats
 # optimization options
 max_iter: 100000              # maximum number of training iterations
 weight_decay: 0.0001          # weight decay
-lr_gen: 0.001 #0.0001                # learning rate for the generator
-lr_dis: 0.001 #0.0001                # learning rate for the discriminator
+lr_gen: 0.0001                # learning rate for the generator
+lr_dis: 0.0001                # learning rate for the discriminator
 init: kaiming                 # initialization [gaussian/kaiming/xavier/orthogonal]
 gan_w: 1                      # weight of adversarial loss for image translation
 fm_w: 1                       # weight on distance between gan features of style and translated image
@@ -41,8 +41,6 @@ size_b: 2868
 scalar: 10
 desired_size: 256
 resize_shorter_side: 300
-input_nc: 1
-output_nc: 1
 
 # data options
 num_workers: 4

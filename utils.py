@@ -49,19 +49,17 @@ def create_loader(root, path, rescale_size_a, rescale_size_b, batch_size, num_cl
 
     crop_size = find_next_crop_size(rescale_size_a)
     cut = rescale_size_a - crop_size
-    print("RESCALE_SIZE: ",rescale_size_a)
     transforms_ = transforms.Compose([
         iaa.Sequential([
             #iaa.Resize({"shorter-side":resize_shorter_side, "longer-side":"keep-aspect-ratio"}),
             iaa.CropToFixedSize(width=desired_size, height=desired_size),
             iaa.HorizontalFlip(p=0.5),
-            iaa.VerticalFlip(p=0.5)
+            iaa.VerticalFlip(p=0.5),
         ]).augment_image,
         customTransforms.ToTensor(),
-        customTransforms.RescaleToOneOne()
+        customTransforms.RescaleToZeroOne()
     ])
     dataset = ImageLabelFilelistCustom(root=root, path=path, transform=transforms_, return_paths=return_paths, num_classes=num_classes)
-    print(dataset[0][0].shape)
     loader = DataLoader(dataset,
                         batch_size,
                         shuffle=shuffle,

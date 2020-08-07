@@ -13,6 +13,8 @@ from debugUtils import Debugger
 
 inplace_bool = False
 
+generaldebug = Debugger()
+
 class ResBlocks(nn.Module):
     def __init__(self, num_blocks, dim, norm, activation, pad_type, inception=False):
         super(ResBlocks, self).__init__()
@@ -26,6 +28,7 @@ class ResBlocks(nn.Module):
         self.model = nn.Sequential(*self.model)
 
     def forward(self, x):
+        #print("FORWARD RESBLOCKS")
         return self.model(x)
 
 
@@ -59,6 +62,7 @@ class ResBlock(nn.Module):
         self.model = nn.Sequential(*model)
 
     def forward(self, x):
+        #print("FORWARD RESBLOCK")
         residual = x
         out = self.model(x)
         out += residual
@@ -83,11 +87,18 @@ class ActFirstResBlock(nn.Module):
             self.conv_s = Conv2dBlock(self.fin, self.fout, 1, 1,
                                       activation='none', use_bias=False)
 
+        #self.register_backward_hook(generaldebug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ACTFIRST-RESBLOCK")
         x_s = self.conv_s(x) if self.learned_shortcut else x
         dx = self.conv_0(x)
         dx = self.conv_1(dx)
         out = x_s + dx
+        generaldebug.checkForNaNandInf(x_s)
+        generaldebug.checkForNaNandInf(dx)
+        generaldebug.checkForNaNandInf(out)
+        #print("FORWARD ACTFIRST DONE")
         return out
 
 
@@ -120,18 +131,36 @@ class LinearBlock(nn.Module):
         else:
             assert 0, "Unsupported activation: {}".format(activation)
 
+        #self.register_backward_hook(self.printgradnorm)
+
     def forward(self, x):
-        debug = Debugger(self.forward, self)
-        debug.checkForNaNandInf(x)
+        #print("FORWARD LINEAR")
+        #debug = Debugger(self.forward, self)
+        #debug.checkForNaNandInf(x)
         out = self.fc(x)
-        debug.checkForNaNandInf(out)
+        #debug.checkForNaNandInf(out)
         if self.norm:
             out = self.norm(out)
-            debug.checkForNaNandInf(out)
+            #debug.checkForNaNandInf(out)
         if self.activation:
             out = self.activation(out)
-            debug.checkForNaNandInf(out)
+            #debug.checkForNaNandInf(out)
         return out
+
+    def printgradnorm(self, cls, grad_input, grad_output):
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        generaldebug.checkForNaNandInf(grad_output[0], msg="In backward")
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max())
+        #print(grad_output)
 
 
 class Conv2dBlock(nn.Module):
@@ -178,38 +207,38 @@ class Conv2dBlock(nn.Module):
 
         self.conv = nn.Conv2d(in_dim, out_dim, ks, st, bias=self.use_bias)
 
-        self.register_backward_hook(self.printgradnorm)
+        #self.register_backward_hook(self.printgradnorm)
 
     def forward(self, x):
-        debug = Debugger(self.forward, self)
-        debug.checkForNaNandInf(x)
+        #debug = Debugger(self.forward, self)
+        #debug.checkForNaNandInf(x, msg="1")
         if self.activation_first:
             if self.activation:
                 x = self.activation(x)
-                debug.checkForNaNandInf(x)
+                #debug.checkForNaNandInf(x, msg="2T")
             x = self.pad(x)
-            debug.checkForNaNandInf(x)
+            #debug.checkForNaNandInf(x,msg="3T")
             x = self.conv(x)
-            debug.checkForNaNandInf(x)
+            #debug.checkForNaNandInf(x,msg="4T")
             if self.norm:
                 x = self.norm(x)
-                debug.checkForNaNandInf(x)
+                #debug.checkForNaNandInf(x,msg="5T")
         else:
             x = self.pad(x)
-            debug.checkForNaNandInf(x)
+            #debug.checkForNaNandInf(x,msg="2F")
             x = self.conv(x)
-            debug.checkForNaNandInf(x)
+            #debug.checkForNaNandInf(x,msg="3F")
             if self.norm:
                 x = self.norm(x)
-                debug.checkForNaNandInf(x)
+                #debug.checkForNaNandInf(x,msg="4F")
             if self.activation:
                 x = self.activation(x)
-                debug.checkForNaNandInf(x)
+                #debug.checkForNaNandInf(x,msg="5F")
         return x
     
     def printgradnorm(self, cls, grad_input, grad_output):
-        #print('Inside ' + cls.__class__.__name__ + ' backward')
-        #print('Inside class:' + cls.__class__.__name__)
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        generaldebug.checkForNaNandInf(grad_output[0], msg="In backward")
         #print('')
         #print('grad_input: ', type(grad_input))
         #print('grad_input[0]: ', type(grad_input[0]))
@@ -219,7 +248,7 @@ class Conv2dBlock(nn.Module):
         #print('grad_input size:', grad_input[0].size())
         #print('grad_output size:', grad_output[0].size())
         #print('grad_input norm:', grad_input[0].norm())
-        print('grad_output_max:', grad_output[0].max())
+        print('grad_output_max:', grad_output[0].max(), 'grad_output_min:', grad_output[0].min())
         #print(grad_output)
 
 
@@ -234,9 +263,11 @@ class AdaptiveInstanceNorm2d(nn.Module):
         self.register_buffer('running_mean', torch.zeros(num_features))
         self.register_buffer('running_var', torch.ones(num_features))
 
+        #self.register_backward_hook(self.printgradnorm)
+
     def forward(self, x):
-        debug = Debugger(self.forward, self)
-        debug.checkForNaNandInf(x)
+        #debug = Debugger(self.forward, self)
+        #debug.checkForNaNandInf(x)
         assert self.weight is not None and \
                self.bias is not None, "Please assign AdaIN weight first"
         b, c = x.size(0), x.size(1)
@@ -254,15 +285,30 @@ class AdaptiveInstanceNorm2d(nn.Module):
         out = F.batch_norm(
             x_reshaped, running_mean, running_var, self.weight, self.bias,
             True, self.momentum, self.eps)
-        debug.checkForNaNandInf(out)
+        #debug.checkForNaNandInf(out)
         out = out.view(b, c, *x.size()[2:])
-        debug.checkForNaNandInf(out)
+        #debug.checkForNaNandInf(out)
         if (isNotFloat):
             out = GlobalConstants.setTensorToPrecision(out)
         return out
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + str(self.num_features) + ')'
+
+    def printgradnorm(self, cls, grad_input, grad_output):
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        generaldebug.checkForNaNandInf(grad_output[0], msg="In backward")
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max(), 'grad_output_min:', grad_output[0].min())
+        #print(grad_output)
 
 class InceptionBlock(Conv2dBlock):
     """

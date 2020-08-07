@@ -21,6 +21,8 @@ KERNEL_SIZE_5 = 3
 #Conv2dBlock = InceptionBlock
 InceptionBlock = Conv2dBlock
 
+debug = Debugger()
+
 def assign_adain_params(adain_params, model):
     # assign the adain_params to the AdaIN layers in model
     for m in model.modules():
@@ -56,7 +58,7 @@ class GPPatchMcResDis(nn.Module):
                              pad_type='reflect',
                              norm='none',
                              activation='none')]
-        for i in range(self.n_layers - 1):
+        for i in range(self.n_layers -1 ):
             nf_out = np.min([nf * 2, 1024])
             cnn_f += [ActFirstResBlock(nf, nf, None, 'lrelu', 'none')]
             cnn_f += [ActFirstResBlock(nf, nf_out, None, 'lrelu', 'none')]
@@ -73,7 +75,11 @@ class GPPatchMcResDis(nn.Module):
         self.cnn_f = nn.Sequential(*cnn_f)
         self.cnn_c = nn.Sequential(*cnn_c)
 
+        #self.register_backward_hook(debug.printgradnorm)
+        self.debug = Debugger()
+
     def forward(self, x, y):
+        #print("FORWARD ",self.__class__.__name__)
         assert(x.size(0) == y.size(0))
         feat = self.cnn_f(x)
         out = self.cnn_c(feat)
@@ -82,6 +88,7 @@ class GPPatchMcResDis(nn.Module):
         return out, feat
 
     def calc_dis_fake_loss(self, input_fake, input_label):
+        #self.debug.printCheckpoint(self.calc_dis_fake_loss)
         resp_fake, gan_feat = self.forward(input_fake, input_label)
         total_count = torch.tensor(np.prod(resp_fake.size()),
                                    dtype=torch.float).cuda()
@@ -91,6 +98,7 @@ class GPPatchMcResDis(nn.Module):
         return fake_loss, fake_accuracy, resp_fake
 
     def calc_dis_real_loss(self, input_real, input_label):
+        #self.debug.printCheckpoint(self.calc_dis_real_loss)
         debug = Debugger(self.calc_dis_real_loss, self, PREFIX)
         resp_real, gan_feat = self.forward(input_real, input_label)
         total_count = torch.tensor(np.prod(resp_real.size()),
@@ -101,15 +109,23 @@ class GPPatchMcResDis(nn.Module):
         return real_loss, real_accuracy, resp_real
 
     def calc_gen_loss(self, input_fake, input_fake_label):
+        #self.debug.printCheckpoint(self.calc_gen_loss)
         resp_fake, gan_feat = self.forward(input_fake, input_fake_label)
+        #print("resp_fake: max: %d, min: %d" % (resp_fake.max(), resp_fake.min()))
+        #print("gan_feat: max: %d, min: %d" % (gan_feat.max(), gan_feat.min()))
+        #print("input_fake: max: %d, min: %d" % (input_fake.max(), input_fake.min()))
         total_count = torch.tensor(np.prod(resp_fake.size()),
                                    dtype=torch.float).cuda()
         loss = -resp_fake.mean()
+        #print("CALC_GEN_LOSS: ",loss)
         correct_count = (resp_fake >= 0).sum()
+        #print("CORRECT COUNT: %d, TOTAL COUNT: %d" % (correct_count, total_count))
         accuracy = correct_count.type_as(loss) / total_count
+        #print("ACC: ",accuracy)
         return loss, accuracy, gan_feat
 
     def calc_grad2(self, d_out, x_in):
+        #self.debug.printCheckpoint(self.calc_grad2)
         batch_size = x_in.size(0)
         grad_dout = autograd.grad(outputs=d_out.mean(),
                                   inputs=x_in,
@@ -213,7 +229,10 @@ class ClassModelEncoder(nn.Module):
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
+        #self.register_backward_hook(debug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x)
 
 
@@ -258,7 +277,10 @@ class ContentEncoder(nn.Module):
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
+        #self.register_backward_hook(debug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x)
 
 
@@ -284,9 +306,12 @@ class Decoder(nn.Module):
 
         self.model = nn.Sequential(*self.model)
 
+        #self.register_backward_hook(debug.printgradnorm)
+
 
 
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x)
 
 
@@ -302,5 +327,8 @@ class MLP(nn.Module):
                                    norm='none', activation='none')]
         self.model = nn.Sequential(*self.model)
 
+        #self.register_backward_hook(debug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x.view(x.size(0), -1))
