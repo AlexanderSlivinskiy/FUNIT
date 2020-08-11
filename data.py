@@ -44,12 +44,21 @@ def default_loader_custom(path):
     if (pic.dtype == 'float64'):
         print("LOADING FLOAT64 IMAGE")
 
-    if (len(pic.shape)==2):
-        pic = pic.reshape((pic.shape[0], pic.shape[1],1))
-        pic = np.repeat(pic, 3, axis=-1)
-    if (pic.shape[0]==3):
-        #print("**************3 IS BACK: ",pic.shape)
-        pic = pic.transpose() #Not sure this is correct to get from (y,x,3) to (3,y,x)
+    if (GlobalConstants.getInputChannels()==3):
+        if (len(pic.shape)==2):
+            pic = pic.reshape((pic.shape[0], pic.shape[1],1))
+            pic = np.repeat(pic, 3, axis=-1)
+        if (pic.shape[0]==3):
+            #print("**************3 IS BACK: ",pic.shape)
+            pic = pic.transpose() #Not sure this is correct to get from (y,x,3) to (3,y,x)
+    elif (GlobalConstants.getInputChannels()==1):
+        if (len(pic.shape)==3):
+            pic = color.rgb2grey(pic)
+            print("Had to grayscale")
+        elif (len(pic.shape)>3):
+            print("ENCOUNTERED AN INPUT WITH MORE THAN 3 CHANNELS. THIS IS LIKELY TO CAUSE CRASHES. NUM OF CHANNELS: ",len(pic.shape))
+
+
 
     #=============SCALING======================
     shorter_side = min(pic.shape[0], pic.shape[1])

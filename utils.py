@@ -57,7 +57,7 @@ def create_loader(root, path, rescale_size_a, rescale_size_b, batch_size, num_cl
             iaa.VerticalFlip(p=0.5),
         ]).augment_image,
         customTransforms.ToTensor(),
-        customTransforms.RescaleToZeroOne()
+        customTransforms.RescaleToOneOne()
     ])
     dataset = ImageLabelFilelistCustom(root=root, path=path, transform=transforms_, return_paths=return_paths, num_classes=num_classes)
     loader = DataLoader(dataset,
@@ -268,6 +268,9 @@ def __write_images(im_outs, dis_img_n, file_name):
         diff_tup = (diff, diff, diff, diff)
         im_outs[0] = F.pad(input=im_outs[0], pad=diff_tup, mode='constant', value=0)
         im_outs[3] = F.pad(input=im_outs[3], pad=diff_tup, mode='constant', value=0)
+
+    print("MAX: ",im_outs[0].max())
+    print("MIN: ",im_outs[0].min())
 
     for i in range(len(im_outs)):
         if im_outs[i].dtype!=torch.float16:

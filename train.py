@@ -53,6 +53,7 @@ if opts.batch_size != 0:
     config['batch_size'] = opts.batch_size
 
 GlobalConstants.setPrecision(config['precision'])
+GlobalConstants.setInputOutputChannels(config['gen']['input_nc'], config['gen']['output_nc'])
 
 trainer = Trainer(config)
 trainer.cuda()

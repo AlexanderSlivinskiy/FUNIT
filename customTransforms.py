@@ -73,9 +73,10 @@ class ToTensor(object):
             else:
                 pic = pic.astype('int32')
         """
-
-        if (pic.shape[2]==3):
+        if (GlobalConstants.getInputChannels()==3 and pic.shape[2]==3):
             pic=pic.transpose()
+        elif (GlobalConstants.getInputChannels()==1 and len(pic.shape)==2):
+            pic=pic.reshape((1, pic.shape[0], pic.shape[1]))
 
         tensor = torch.from_numpy(pic.copy())
         if (not GlobalConstants.usingApex):

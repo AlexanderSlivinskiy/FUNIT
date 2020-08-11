@@ -4,7 +4,7 @@
 
 # logger options
 image_save_iter: 2500         # How often do you want to save output images during training
-image_display_iter: 100       # How often do you want to display output images during training
+image_display_iter: 1       # How often do you want to display output images during training
 snapshot_save_iter: 5000      # How often do you want to save trained models
 log_iter: 1                   # How often do you want to log the training stats
 
@@ -27,13 +27,13 @@ gen:
   n_mlp_blks: 3               # number of mlp blocks
   n_downs_content: 3          # number of downsampling layers in content encoder
   n_downs_class: 4           # number of downsampling layers in class model encoder
-  input_nc: 3
-  output_nc: 3
+  input_nc: 1
+  output_nc: 1
 dis:
   nf: 64                      # base number of filters
   n_res_blks: 10              # number of residual blocks in the discriminator
   num_classes: 8            # number of classes in the training set
-  input_nc: 3
+  input_nc: 1
 
 #img options
 size_a: 2868
@@ -46,7 +46,7 @@ resize_shorter_side: 300
 num_workers: 4
 batch_size: 8
 new_size:   0                 # first resize the shortest image side to this size
-precision: float16_Apex
+precision: float32_Apex
 crop_image_height: 0          # random crop image of this height
 crop_image_width: 0           # random crop image of this width
 data_folder_train: ../../../scratch/bunk/cell2cell/test/ #Sasha: I know this should say "train", but right now I'm having it in "test"

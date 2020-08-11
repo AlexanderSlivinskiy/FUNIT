@@ -52,6 +52,7 @@ class FUNITModel(nn.Module):
             l_adv_r, gacc_r, xr_gan_feat = self.dis.calc_gen_loss(xr, la)
             _, xb_gan_feat = self.dis(xb, lb)
             _, xa_gan_feat = self.dis(xa, la)
+            #l_c_reconst = loss content reconstruct??
             l_c_rec = recon_criterion(xr_gan_feat.mean(3).mean(2),
                                       xa_gan_feat.mean(3).mean(2))
             l_m_rec = recon_criterion(xt_gan_feat.mean(3).mean(2),
