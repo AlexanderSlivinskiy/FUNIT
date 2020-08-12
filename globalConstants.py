@@ -8,6 +8,8 @@ class GlobalConstants():
     inputchannels = None
     outputchannels = None
 
+    optimizer = None
+
 
     def getPrecision():
         return GlobalConstants.checkIfSet(GlobalConstants.precision, "Precision", GlobalConstants.setPrecision.__name__)
@@ -51,6 +53,11 @@ class GlobalConstants():
     def getOutputChannels():
         return GlobalConstants.checkIfSet(GlobalConstants.outputchannels, "Output channels", GlobalConstants.setInputOutputChannels.__name__)
 
+    def setOptimizer(optimizer):
+        GlobalConstants.optimizer = optimizer
+    
+    def getOptimizer():
+        return GlobalConstants.checkIfSet(GlobalConstants.optimizer, "Optimizer", GlobalConstants.setOptimizer.__name__)
 
     def checkIfSet(x, var_name, func_name):
         if (x is None):

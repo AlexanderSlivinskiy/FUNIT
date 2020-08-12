@@ -40,29 +40,21 @@ class Trainer(nn.Module):
         lr_dis = cfg['lr_dis']
         dis_params = list(self.model.dis.parameters())
         gen_params = list(self.model.gen.parameters())
-        
-        if (GlobalConstants.precision == torch.float16):
-            self.dis_opt = torch.optim.Adam(
-                [p for p in dis_params if p.requires_grad],
-                lr=lr_gen, weight_decay=cfg['weight_decay'])
-            self.gen_opt = torch.optim.Adam(
-                [p for p in gen_params if p.requires_grad],
-                lr=lr_dis, weight_decay=cfg['weight_decay'])
-            """
-            self.dis_opt = Adam16(
-                [p for p in dis_params if p.requires_grad],
-                lr=lr_gen, weight_decay=cfg['weight_decay'], eps=1e-4)
-            self.gen_opt = Adam16(
-                [p for p in gen_params if p.requires_grad],
-                lr=lr_dis, weight_decay=cfg['weight_decay'], eps=1e-4)
-            """
+
+        if (GlobalConstants.getOptimizer().upper() == "Adam".upper()):
+            Optimizer = torch.optim.Adam
+        elif (GlobalConstants.getOptimizer().upper() == "RMSprop".upper()):
+            Optimizer = torch.optim.RMSprop
         else:
-            self.dis_opt = torch.optim.RMSprop(
-                [p for p in dis_params if p.requires_grad],
-                lr=lr_gen, weight_decay=cfg['weight_decay'])
-            self.gen_opt = torch.optim.RMSprop(
-                [p for p in gen_params if p.requires_grad],
-                lr=lr_dis, weight_decay=cfg['weight_decay'])
+            print(GlobalConstants.getOptimizer(), "is currently not supported")
+
+        self.dis_opt = Optimizer(
+            [p for p in dis_params if p.requires_grad],
+            lr=lr_gen, weight_decay=cfg['weight_decay'])
+        self.gen_opt = Optimizer(
+            [p for p in gen_params if p.requires_grad],
+            lr=lr_dis, weight_decay=cfg['weight_decay'])
+
 
         self.model.cuda()
         # APEX initialization
@@ -80,10 +72,10 @@ class Trainer(nn.Module):
         self.apply(weights_init(cfg['init']))
         self.model.gen_test = copy.deepcopy(self.model.gen)
 
-    def gen_update(self, co_data, cl_data, hp, multigpus):
+    def gen_update(self, co_data, cl_data, hp, multigpus, it):
         self.gen_opt.zero_grad()
-        al, ad, xr, cr, sr, ac = self.model(co_data, cl_data, hp, 'gen_update')
-        self.loss_gen_total = torch.mean(al)
+        adverserial_loss, ad, xr, cr, sr, ac = self.model(co_data, cl_data, hp, 'gen_update', it)
+        self.loss_gen_total = torch.mean(adverserial_loss)
         self.loss_gen_recon_x = torch.mean(xr)
         self.loss_gen_recon_c = torch.mean(cr)
         self.loss_gen_recon_s = torch.mean(sr)
@@ -94,16 +86,16 @@ class Trainer(nn.Module):
         update_average(this_model.gen_test, this_model.gen)
         return self.accuracy_gen_adv.item()
 
-    def dis_update(self, co_data, cl_data, hp):
+    def dis_update(self, co_data, cl_data, hp, it):
         self.dis_opt.zero_grad()
 
         #print("--------PRINTING SUMMARY--------")
         #summary(self.model, [co_data, cl_data, hp, 'dis_update'])
         
-        al, lfa, lre, reg, acc = self.model(co_data, cl_data, hp, 'dis_update')
-        self.loss_dis_total = torch.mean(al)
-        self.loss_dis_fake_adv = torch.mean(lfa)
-        self.loss_dis_real_adv = torch.mean(lre)
+        adverserial_loss, loss_dis_fake_adv, l_reconst, reg, loss_wasserstein, acc = self.model(co_data, cl_data, hp, 'dis_update', it)
+        self.loss_dis_total = torch.mean(adverserial_loss)
+        self.loss_dis_fake_adv = torch.mean(loss_dis_fake_adv)
+        self.loss_dis_real_adv = torch.mean(l_reconst)
         self.loss_dis_reg = torch.mean(reg)
         self.accuracy_dis_adv = torch.mean(acc)
         self.dis_opt.step()

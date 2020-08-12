@@ -13,6 +13,8 @@ from blocks import LinearBlock, ResBlocks, ActFirstResBlock, InceptionBlock, Con
 
 from debugUtils import Debugger
 
+from customLosses import gradient_penalty
+
 PREFIX = "networks.py"
 KERNEL_SIZE_7 = 3
 KERNEL_SIZE_4 = 3
@@ -136,6 +138,10 @@ class GPPatchMcResDis(nn.Module):
         assert (grad_dout2.size() == x_in.size())
         reg = grad_dout2.sum()/batch_size
         return reg
+
+    def calc_wasserstein_loss(self, pred_real, pred_fake):
+        loss_D_real = torch.mean(pred_real) - torch.mean(pred_fake)
+        return loss_D_real
 
 
 class FewShotGen(nn.Module):

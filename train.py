@@ -54,6 +54,7 @@ if opts.batch_size != 0:
 
 GlobalConstants.setPrecision(config['precision'])
 GlobalConstants.setInputOutputChannels(config['gen']['input_nc'], config['gen']['output_nc'])
+GlobalConstants.setOptimizer(config['optimizer'])
 
 trainer = Trainer(config)
 trainer.cuda()
@@ -102,9 +103,9 @@ while True:
             zip(train_content_loader, train_class_loader)):
         with Timer("Elapsed time in update: %f"):
             #torch.autograd.set_detect_anomaly(True)
-            d_acc = trainer.dis_update(co_data, cl_data, config)
+            d_acc = trainer.dis_update(co_data, cl_data, config, it)
             g_acc = trainer.gen_update(co_data, cl_data, config,
-                                       opts.multigpus)
+                                       opts.multigpus, it)
             torch.cuda.synchronize()
             print('D acc: %.4f\t G acc: %.4f' % (d_acc, g_acc))
 
