@@ -49,6 +49,8 @@ class FUNITModel(nn.Module):
             s_xb = self.gen.enc_class_model(xb)
             x_translation = self.gen.decode(c_xa, s_xb)  # translation
             xa_reconstruct = self.gen.decode(c_xa, s_xa)  # reconstruction
+            #GAN-Gen-Loss
+            #ADVESERIAL LOSS <---- Wasserstein
             l_adv_t, gen_acc_translation, xt_gan_feat = self.dis.calc_gen_loss(x_translation, label_b)
             l_adv_r, gen_acc_reconstruct, xr_gan_feat = self.dis.calc_gen_loss(xa_reconstruct, label_a)
             _, xb_gan_feat = self.dis(xb, label_b)
@@ -77,12 +79,16 @@ class FUNITModel(nn.Module):
             #resp_r is exactly the output of the discrimator which classifies how likely it
             #thinks the output is real
             l_real_pre, acc_r, resp_r = self.dis.calc_dis_real_loss(xb, label_b)
+
+            #KOMMT WEG
             l_real = hp['gan_w'] * l_real_pre
             if (GlobalConstants.usingApex):
                 with amp.scale_loss(l_real, [self.gen_opt, self.dis_opt]) as scaled_loss:
                     scaled_loss.backward(retain_graph=True)
             else:
                 l_real.backward(retain_graph=True)
+
+            #Some Gradient penalty?            
             l_reg_pre = self.dis.calc_grad2(resp_r, xb)
             l_reg = 10 * l_reg_pre
             if (GlobalConstants.usingApex):
@@ -96,6 +102,7 @@ class FUNITModel(nn.Module):
                 x_translation = self.gen.decode(c_xa, s_xb)
             l_fake_p, acc_f, resp_f = self.dis.calc_dis_fake_loss(x_translation.detach(),
                                                                   label_b)
+            #WEG                
             l_fake = hp['gan_w'] * l_fake_p
             if (GlobalConstants.usingApex):
                 with amp.scale_loss(l_fake, [self.gen_opt, self.dis_opt]) as scaled_loss:
@@ -103,7 +110,7 @@ class FUNITModel(nn.Module):
             else: 
                 l_fake.backward(retain_graph=True)
 
-
+            """
             #===Wasserstein Loss======#
             loss_D_real = self.dis.calc_wasserstein_loss(resp_r, resp_f)
             penalty = customLosses.gradient_penalty_FUNIT(xb, x_translation, self.dis, label_b, 10)
@@ -113,6 +120,7 @@ class FUNITModel(nn.Module):
                     scaled_loss.backward()
             else:
                 loss_wasserstein.backward()
+            """
 
             l_total = l_fake + l_real + l_reg
             acc = 0.5 * (acc_f + acc_r)

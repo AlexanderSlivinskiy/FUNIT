@@ -24,6 +24,9 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '1' #"0,1" for the hard stuff, "2" for your
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
+#USE FOLLOWING COMMAND TO EXECUTE: 
+#python train.py --config configs/funit_confs_custom.yaml
+
 parser = argparse.ArgumentParser()
 parser.add_argument('--config',
                     type=str,
