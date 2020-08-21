@@ -62,14 +62,17 @@ def default_loader_custom(path):
 
     #=============SCALING======================
     shorter_side = min(pic.shape[0], pic.shape[1])
+    scale = 1
     if (class_name == "Hela"):
-        shorter_side = shorter_side//8
+        shorter_side = shorter_side//(8*scale)
     if (class_name == "mSar"):
-        shorter_side = shorter_side//6
+        shorter_side = shorter_side//(6*scale)
     if (class_name == "malaria"):
-        shorter_side = shorter_side//4
+        shorter_side = shorter_side//(4*scale)
     if (class_name == "Human_Hepatocyte_Murine_Fibroblast"):
-        shorter_side = int(shorter_side/2)
+        shorter_side = int(shorter_side//(2*scale))
+    else:
+        shorter_side = int(shorter_side//scale)
     scale = iaa.Resize({"shorter-side":shorter_side, "longer-side":"keep-aspect-ratio"}).augment_image
     pic = scale(pic)
 
