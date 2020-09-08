@@ -140,8 +140,6 @@ class GPPatchMcResDis(nn.Module):
         return reg
 
     def calc_wasserstein_loss(self, pred_real, pred_fake):
-        print("pred_real: shape: ",pred_real.shape," dtype: ",pred_real.dtype)
-        print("pred_fake: shape: ",pred_fake.shape," dtype: ",pred_fake.dtype)
         if(pred_fake.dtype != pred_real.dtype):
             print("In Wasserstein, pred_real and pred_fake didn't have same datatype. Casting",pred_fake.dtype," to",pred_real.dtype)
             pred_fake = pred_fake.type(torch.float32)

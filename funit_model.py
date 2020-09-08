@@ -53,6 +53,9 @@ class FUNITModel(nn.Module):
             #ADVESERIAL LOSS <---- Wasserstein
             l_adv_t, gen_acc_translation, xt_gan_feat = self.dis.calc_gen_loss(x_translation, label_b)
             l_adv_r, gen_acc_reconstruct, xr_gan_feat = self.dis.calc_gen_loss(xa_reconstruct, label_a)
+            #I keep the upper part for acc and reconstruct
+            l_adv_t = self.dis.calc_wasserstein_loss(xb, x_translation)
+            l_adv_t = self.dis.calc_wasserstein_loss(xa, xa_reconstruct)
             _, xb_gan_feat = self.dis(xb, label_b)
             _, xa_gan_feat = self.dis(xa, label_a)
             #l_c_reconst = loss content reconstruct??

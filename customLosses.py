@@ -39,7 +39,7 @@ def gradient_penalty(real_data, generated_data, discriminator, gp_weight=10):
 
 def gradient_penalty_FUNIT(real_data, generated_data, discriminator, label, gp_weight=10):
     if (real_data.shape[-1]!=generated_data.shape[-1]):
-        print("Shapes weren't equal for Wasserstein loss. Using Interpolation")
+        print("Shapes weren't equal for Wasserstein loss gradient penalty. Using Interpolation")
         generated_data = F.interpolate(generated_data, real_data.shape[-1])
 
     batch_size = real_data.size()[0]
