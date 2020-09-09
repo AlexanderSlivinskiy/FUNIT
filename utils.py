@@ -14,8 +14,9 @@ import torchvision.utils as vutils
 
 from data import ImageLabelFilelist, ImageLabelFilelistCustom
 import customTransforms
-from imgaug import augmenters as iaa
 from glob import glob
+import torch.nn.functional as F
+from imgaug import augmenters as iaa
 
 # Finds biggest 2^x such that 2^x < size
 def find_next_crop_size(size):
@@ -48,19 +49,17 @@ def create_loader(root, path, rescale_size_a, rescale_size_b, batch_size, num_cl
 
     crop_size = find_next_crop_size(rescale_size_a)
     cut = rescale_size_a - crop_size
-    print("RESCALE_SIZE: ",rescale_size_a)
     transforms_ = transforms.Compose([
         iaa.Sequential([
-            iaa.Resize({"shorter-side":resize_shorter_side, "longer-side":"keep-aspect-ratio"}),
+            #iaa.Resize({"shorter-side":resize_shorter_side, "longer-side":"keep-aspect-ratio"}),
             iaa.CropToFixedSize(width=desired_size, height=desired_size),
             iaa.HorizontalFlip(p=0.5),
-            iaa.VerticalFlip(p=0.5)
+            iaa.VerticalFlip(p=0.5),
         ]).augment_image,
         customTransforms.ToTensor(),
         customTransforms.RescaleToOneOne()
     ])
     dataset = ImageLabelFilelistCustom(root=root, path=path, transform=transforms_, return_paths=return_paths, num_classes=num_classes)
-    print(dataset[0][0].shape)
     loader = DataLoader(dataset,
                         batch_size,
                         shuffle=shuffle,
@@ -262,6 +261,16 @@ def make_result_folders(output_directory):
 
 def __write_images(im_outs, dis_img_n, file_name):
     im_outs = [images.expand(-1, 3, -1, -1) for images in im_outs]
+    if im_outs[0].shape != im_outs[1].shape:
+        in_dim = im_outs[0].shape[2]
+        out_dim = im_outs[1].shape[2]
+        diff = int((out_dim - in_dim)/2)
+        diff_tup = (diff, diff, diff, diff)
+        im_outs[0] = F.pad(input=im_outs[0], pad=diff_tup, mode='constant', value=0)
+        im_outs[3] = F.pad(input=im_outs[3], pad=diff_tup, mode='constant', value=0)
+    for i in range(len(im_outs)):
+        if im_outs[i].dtype!=torch.float16:
+            im_outs[i] = im_outs[i].half()
     image_tensor = torch.cat([images[:dis_img_n] for images in im_outs], 0)
     image_grid = vutils.make_grid(image_tensor.data,
                                   nrow=dis_img_n, padding=0, normalize=True)

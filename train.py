@@ -15,13 +15,17 @@ from tensorboardX import SummaryWriter
 from utils import get_config, get_train_loaders, make_result_folders, get_train_loaders_custom
 from utils import write_loss, write_html, write_1images, Timer, make_log_folder
 from trainer import Trainer
+from globalConstants import GlobalConstants
 from blocks import AdaptiveInstanceNorm2d
 from torch.nn import BatchNorm1d, BatchNorm2d
 
 import torch.backends.cudnn as cudnn
-os.environ['CUDA_VISIBLE_DEVICES'] = '0,1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
+os.environ['CUDA_VISIBLE_DEVICES'] = '0' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
+
+#USE FOLLOWING COMMAND TO EXECUTE: 
+#python train.py --config configs/funit_confs_custom.yaml
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config',
@@ -51,6 +55,10 @@ max_iter = config['max_iter']
 if opts.batch_size != 0:
     config['batch_size'] = opts.batch_size
 
+GlobalConstants.setPrecision(config['precision'])
+GlobalConstants.setInputOutputChannels(config['gen']['input_nc'], config['gen']['output_nc'])
+GlobalConstants.setOptimizer(config['optimizer'])
+
 trainer = Trainer(config)
 trainer.cuda()
 if opts.multigpus:
@@ -77,10 +85,11 @@ test_class_loader = loaders[3]
 
 # Setup logger and output folders
 model_name = os.path.splitext(os.path.basename(opts.config))[0]
-logs_path = make_log_folder(".")
+logs_path = make_log_folder("./")
 train_writer = SummaryWriter(
     os.path.join(logs_path, model_name))
 output_directory = os.path.join(opts.output_path + "/outputs", model_name)
+GlobalConstants.setOutputPath(output_directory)
 checkpoint_directory, image_directory = make_result_folders(output_directory)
 shutil.copy(opts.config, os.path.join(output_directory, 'config.yaml'))
 
@@ -88,15 +97,25 @@ iterations = trainer.resume(checkpoint_directory,
                             hp=config,
                             multigpus=opts.multigpus) if opts.resume else 0
 
+
+if (GlobalConstants.getPrecision() == torch.float16 and (not GlobalConstants.usingApex)):
+    trainer.model.half()  # convert to half precision
+    for layer in trainer.model.modules():
+        if isinstance(layer, AdaptiveInstanceNorm2d):
+            layer.float()
+        elif isinstance(layer, BatchNorm2d):
+            layer.float()
+
+
 #trainer.summary(None)
 while True:
     for it, (co_data, cl_data) in enumerate(
             zip(train_content_loader, train_class_loader)):
         with Timer("Elapsed time in update: %f"):
-            torch.autograd.set_detect_anomaly(True)
-            d_acc = trainer.dis_update(co_data, cl_data, config)
+            #torch.autograd.set_detect_anomaly(True)
+            d_acc = trainer.dis_update(co_data, cl_data, config, it)
             g_acc = trainer.gen_update(co_data, cl_data, config,
-                                       opts.multigpus)
+                                       opts.multigpus, it)
             torch.cuda.synchronize()
             print('D acc: %.4f\t G acc: %.4f' % (d_acc, g_acc))
 

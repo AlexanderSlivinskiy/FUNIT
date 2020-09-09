@@ -1,0 +1,430 @@
+Using APEX
+Set precision to: torch.float16
+Selected optimization level O1:  Insert automatic casts around Pytorch functions and Tensor methods.
+
+Defaults for this optimization level are:
+enabled                : True
+opt_level              : O1
+cast_model_type        : None
+patch_torch_functions  : True
+keep_batchnorm_fp32    : None
+master_weights         : None
+loss_scale             : dynamic
+Processing user overrides (additional kwargs that are not None)...
+After processing overrides, optimization options are:
+enabled                : True
+opt_level              : O1
+cast_model_type        : None
+patch_torch_functions  : True
+keep_batchnorm_fp32    : None
+master_weights         : None
+loss_scale             : dynamic
+RESCALE_SIZE:  286
+Data loader
+	Root: .
+	Number of images: 1975
+	Classes:  ['Hela', 'synthetic_BBBC004', 'Human_USOS_P_20585', 'malaria', 'dp', 'mSar', 'Human_HT29_Colon_Cancer_DNA', 'Human_Hepatocyte_Murine_Fibroblast']
+	Number of classes: 8
+torch.Size([3, 256, 256])
+RESCALE_SIZE:  286
+Data loader
+	Root: .
+	Number of images: 1975
+	Classes:  ['Hela', 'synthetic_BBBC004', 'Human_USOS_P_20585', 'malaria', 'dp', 'mSar', 'Human_HT29_Colon_Cancer_DNA', 'Human_Hepatocyte_Murine_Fibroblast']
+	Number of classes: 8
+torch.Size([3, 256, 256])
+=== : .calc_dis_real_loss, checkpoint: 0 ===
+FORWARD  GPPatchMcResDis
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(5.9843e-05, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(5.9843e-05, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-6.0499e-05, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0005, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0005, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0005, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0006, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0010, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0008, device='cuda:0', dtype=torch.float16)
+=== : .calc_grad2, checkpoint: 1 ===
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(6.0499e-05, device='cuda:0', dtype=torch.float16,
+       grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(6.0499e-05, device='cuda:0', dtype=torch.float16,
+       grad_fn=<MaxBackward1>) grad_output_min: tensor(-5.9843e-05, device='cuda:0', dtype=torch.float16,
+       grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0005, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0005, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0005, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0006, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0006, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0006, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0006, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0005, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0008, device='cuda:0', dtype=torch.float16, grad_fn=<MaxBackward1>) grad_output_min: tensor(-0.0010, device='cuda:0', dtype=torch.float16, grad_fn=<MinBackward1>)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0., device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+FORWARD  ContentEncoder
+FORWARD RESBLOCKS
+FORWARD RESBLOCK
+FORWARD RESBLOCK
+FORWARD  ClassModelEncoder
+FORWARD  MLP
+FORWARD LINEAR
+FORWARD LINEAR
+FORWARD LINEAR
+FORWARD  Decoder
+FORWARD RESBLOCKS
+FORWARD RESBLOCK
+FORWARD RESBLOCK
+=== : .calc_dis_fake_loss, checkpoint: 2 ===
+FORWARD  GPPatchMcResDis
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(0., device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(6.4611e-05, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(6.4611e-05, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-5.5552e-05, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0001, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0001, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0004, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0004, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0003, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0003, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0002, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0002, device='cuda:0', dtype=torch.float16)
+Inside ActFirstResBlock backward
+grad_output_max: tensor(0.0005, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0005, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0006, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0006, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0005, device='cuda:0', dtype=torch.float16)
+Inside Conv2dBlock backward
+grad_output_max: tensor(0.0006, device='cuda:0', dtype=torch.float16) grad_output_min: tensor(-0.0009, device='cuda:0', dtype=torch.float16)
+FORWARD  ContentEncoder
+FORWARD RESBLOCKS
+FORWARD RESBLOCK
+FORWARD RESBLOCK
+FORWARD  ClassModelEncoder
+FORWARD  ClassModelEncoder
+FORWARD  MLP
+FORWARD LINEAR
+FORWARD LINEAR
+FORWARD LINEAR
+FORWARD  Decoder
+FORWARD RESBLOCKS
+FORWARD RESBLOCK
+FORWARD RESBLOCK
+FORWARD  MLP
+FORWARD LINEAR
+FORWARD LINEAR
+FORWARD LINEAR
+FORWARD  Decoder
+FORWARD RESBLOCKS
+FORWARD RESBLOCK
+FORWARD RESBLOCK
+=== : .calc_gen_loss, checkpoint: 3 ===
+FORWARD  GPPatchMcResDis
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+FORWARD ACTFIRST-RESBLOCK
+FORWARD ACTFIRST DONE
+INPUT IS INF IN FORWARD PASS!! tensor(33, device='cuda:0')
+=== : Conv2dBlock.forward, checkpoint: 0 ===
+4T
+Elapsed time in update: 44.404877

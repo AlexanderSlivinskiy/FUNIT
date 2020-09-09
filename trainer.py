@@ -11,11 +11,13 @@ import torch
 import torch.nn as nn
 import torch.nn.init as init
 from torch.optim import lr_scheduler
+from customOptimizers import Adam16
 
 from funit_model import FUNITModel
 from torchvision import models
-from customOptimizers import Adam16
+from globalConstants import GlobalConstants
 
+import apex.amp as amp
 
 from torchsummary import summary
 from tensorboardX import SummaryWriter
@@ -38,21 +40,42 @@ class Trainer(nn.Module):
         lr_dis = cfg['lr_dis']
         dis_params = list(self.model.dis.parameters())
         gen_params = list(self.model.gen.parameters())
-        self.dis_opt = Adam16(
+
+        if (GlobalConstants.getOptimizer().upper() == "Adam".upper()):
+            Optimizer = torch.optim.Adam
+        elif (GlobalConstants.getOptimizer().upper() == "RMSprop".upper()):
+            Optimizer = torch.optim.RMSprop
+        else:
+            print(GlobalConstants.getOptimizer(), "is currently not supported")
+
+        self.dis_opt = Optimizer(
             [p for p in dis_params if p.requires_grad],
             lr=lr_gen, weight_decay=cfg['weight_decay'])
-        self.gen_opt = Adam16(
+        self.gen_opt = Optimizer(
             [p for p in gen_params if p.requires_grad],
             lr=lr_dis, weight_decay=cfg['weight_decay'])
+
+
+        self.model.cuda()
+        # APEX initialization
+        if (GlobalConstants.usingApex):
+            opt_level = 'O0'
+            self.model, [self.dis_opt, self.gen_opt] = amp.initialize(
+                self.model, [self.dis_opt, self.gen_opt], opt_level=opt_level, num_losses=4,
+                max_loss_scale=2**0,
+                verbosity=1 #For now
+                )
+            self.model.setOptimizersForApex(self.dis_opt, self.gen_opt)
+
         self.dis_scheduler = get_scheduler(self.dis_opt, cfg)
         self.gen_scheduler = get_scheduler(self.gen_opt, cfg)
         self.apply(weights_init(cfg['init']))
         self.model.gen_test = copy.deepcopy(self.model.gen)
 
-    def gen_update(self, co_data, cl_data, hp, multigpus):
+    def gen_update(self, co_data, cl_data, hp, multigpus, it):
         self.gen_opt.zero_grad()
-        al, ad, xr, cr, sr, ac = self.model(co_data, cl_data, hp, 'gen_update')
-        self.loss_gen_total = torch.mean(al)
+        adverserial_loss, ad, xr, cr, sr, ac = self.model(co_data, cl_data, hp, 'gen_update', it)
+        self.loss_gen_total = torch.mean(adverserial_loss)
         self.loss_gen_recon_x = torch.mean(xr)
         self.loss_gen_recon_c = torch.mean(cr)
         self.loss_gen_recon_s = torch.mean(sr)
@@ -63,16 +86,16 @@ class Trainer(nn.Module):
         update_average(this_model.gen_test, this_model.gen)
         return self.accuracy_gen_adv.item()
 
-    def dis_update(self, co_data, cl_data, hp):
+    def dis_update(self, co_data, cl_data, hp, it):
         self.dis_opt.zero_grad()
 
         #print("--------PRINTING SUMMARY--------")
         #summary(self.model, [co_data, cl_data, hp, 'dis_update'])
         
-        al, lfa, lre, reg, acc = self.model(co_data, cl_data, hp, 'dis_update')
-        self.loss_dis_total = torch.mean(al)
-        self.loss_dis_fake_adv = torch.mean(lfa)
-        self.loss_dis_real_adv = torch.mean(lre)
+        adverserial_loss, loss_dis_fake_adv, l_reconst, reg, acc = self.model(co_data, cl_data, hp, 'dis_update', it)
+        self.loss_dis_total = torch.mean(adverserial_loss)
+        self.loss_dis_fake_adv = torch.mean(loss_dis_fake_adv)
+        self.loss_dis_real_adv = torch.mean(l_reconst)
         self.loss_dis_reg = torch.mean(reg)
         self.accuracy_dis_adv = torch.mean(acc)
         self.dis_opt.step()
@@ -101,6 +124,10 @@ class Trainer(nn.Module):
 
         self.dis_scheduler = get_scheduler(self.dis_opt, hp, iterations)
         self.gen_scheduler = get_scheduler(self.gen_opt, hp, iterations)
+
+        if (GlobalConstants.usingApex):
+            state_dict = torch.load(os.path.join(checkpoint_dir, 'amp.pt'))
+            amp.load_state_dict(state_dict['amp'])
         print('Resume from iteration %d' % iterations)
         return iterations
 
@@ -115,6 +142,9 @@ class Trainer(nn.Module):
         torch.save({'dis': this_model.dis.state_dict()}, dis_name)
         torch.save({'gen': self.gen_opt.state_dict(),
                     'dis': self.dis_opt.state_dict()}, opt_name)
+        if (GlobalConstants.usingApex):
+            amp_name = os.path.join(snapshot_dir, "amp.pt")
+            torch.save({'amp': amp.state_dict()}, amp_name)
 
     def load_ckpt(self, ckpt_name):
         state_dict = torch.load(ckpt_name)
@@ -149,6 +179,7 @@ def get_scheduler(optimizer, hp, it=-1):
     if 'lr_policy' not in hp or hp['lr_policy'] == 'constant':
         scheduler = None  # constant scheduler
     elif hp['lr_policy'] == 'step':
+        print("I LIED! I DO HAVE A SCHEDULER!")
         scheduler = lr_scheduler.StepLR(optimizer, step_size=hp['step_size'],
                                         gamma=hp['gamma'], last_epoch=it)
     else:

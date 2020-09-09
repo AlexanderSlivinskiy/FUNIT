@@ -7,37 +7,54 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 import math
+from globalConstants import GlobalConstants
+import skimage.io as sk
+from debugUtils import Debugger
 
 inplace_bool = False
 
+generaldebug = Debugger()
+
 class ResBlocks(nn.Module):
-    def __init__(self, num_blocks, dim, norm, activation, pad_type):
+    def __init__(self, num_blocks, dim, norm, activation, pad_type, inception=False):
         super(ResBlocks, self).__init__()
         self.model = []
         for i in range(num_blocks):
             self.model += [ResBlock(dim,
                                     norm=norm,
                                     activation=activation,
-                                    pad_type=pad_type)]
+                                    pad_type=pad_type,
+                                    inception=inception)]
         self.model = nn.Sequential(*self.model)
 
     def forward(self, x):
+        #print("FORWARD RESBLOCKS")
         return self.model(x)
 
 
 class ResBlock(nn.Module):
-    def __init__(self, dim, norm='in', activation='relu', pad_type='zero'):
+    def __init__(self, dim, norm='in', activation='relu', pad_type='zero', inception=False):
         super(ResBlock, self).__init__()
         model = []        
 
-        #-------------NOTE_THIS!!---------------#
+        #REMOVE:
+        inception = False
 
-        InceptionBlock = Conv2dBlock
-        model += [InceptionBlock(dim, dim, 3, 1, 1,
+        if (inception):
+            model += [InceptionBlock(dim, dim, 3, 1, 1,
                               norm=norm,
                               activation=activation,
                               pad_type=pad_type)]
-        model += [InceptionBlock(dim, dim, 3, 1, 1,
+            model += [InceptionBlock(dim, dim, 3, 1, 1,
+                              norm=norm,
+                              activation='none',
+                              pad_type=pad_type)]
+        else:
+            model += [Conv2dBlock(dim, dim, 3, 1, 1,
+                              norm=norm,
+                              activation=activation,
+                              pad_type=pad_type)]
+            model += [Conv2dBlock(dim, dim, 3, 1, 1,
                               norm=norm,
                               activation='none',
                               pad_type=pad_type)]
@@ -45,6 +62,7 @@ class ResBlock(nn.Module):
         self.model = nn.Sequential(*model)
 
     def forward(self, x):
+        #print("FORWARD RESBLOCK")
         residual = x
         out = self.model(x)
         out += residual
@@ -69,11 +87,18 @@ class ActFirstResBlock(nn.Module):
             self.conv_s = Conv2dBlock(self.fin, self.fout, 1, 1,
                                       activation='none', use_bias=False)
 
+        #self.register_backward_hook(generaldebug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ACTFIRST-RESBLOCK")
         x_s = self.conv_s(x) if self.learned_shortcut else x
         dx = self.conv_0(x)
         dx = self.conv_1(dx)
         out = x_s + dx
+        generaldebug.checkForNaNandInf(x_s)
+        generaldebug.checkForNaNandInf(dx)
+        generaldebug.checkForNaNandInf(out)
+        #print("FORWARD ACTFIRST DONE")
         return out
 
 
@@ -106,13 +131,36 @@ class LinearBlock(nn.Module):
         else:
             assert 0, "Unsupported activation: {}".format(activation)
 
+        #self.register_backward_hook(self.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD LINEAR")
+        #debug = Debugger(self.forward, self)
+        #debug.checkForNaNandInf(x)
         out = self.fc(x)
+        #debug.checkForNaNandInf(out)
         if self.norm:
             out = self.norm(out)
+            #debug.checkForNaNandInf(out)
         if self.activation:
             out = self.activation(out)
+            #debug.checkForNaNandInf(out)
         return out
+
+    def printgradnorm(self, cls, grad_input, grad_output):
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        generaldebug.checkForNaNandInf(grad_output[0], msg="In backward")
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max())
+        #print(grad_output)
 
 
 class Conv2dBlock(nn.Module):
@@ -159,22 +207,49 @@ class Conv2dBlock(nn.Module):
 
         self.conv = nn.Conv2d(in_dim, out_dim, ks, st, bias=self.use_bias)
 
+        #self.register_backward_hook(self.printgradnorm)
+
     def forward(self, x):
+        #debug = Debugger(self.forward, self)
+        #debug.checkForNaNandInf(x, msg="1")
         if self.activation_first:
             if self.activation:
                 x = self.activation(x)
+                #debug.checkForNaNandInf(x, msg="2T")
             x = self.pad(x)
+            #debug.checkForNaNandInf(x,msg="3T")
             x = self.conv(x)
+            #debug.checkForNaNandInf(x,msg="4T")
             if self.norm:
                 x = self.norm(x)
+                #debug.checkForNaNandInf(x,msg="5T")
         else:
             x = self.pad(x)
+            #debug.checkForNaNandInf(x,msg="2F")
             x = self.conv(x)
+            #debug.checkForNaNandInf(x,msg="3F")
             if self.norm:
                 x = self.norm(x)
+                #debug.checkForNaNandInf(x,msg="4F")
             if self.activation:
                 x = self.activation(x)
+                #debug.checkForNaNandInf(x,msg="5F")
         return x
+    
+    def printgradnorm(self, cls, grad_input, grad_output):
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        generaldebug.checkForNaNandInf(grad_output[0], msg="In backward")
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max(), 'grad_output_min:', grad_output[0].min())
+        #print(grad_output)
 
 
 class AdaptiveInstanceNorm2d(nn.Module):
@@ -188,31 +263,51 @@ class AdaptiveInstanceNorm2d(nn.Module):
         self.register_buffer('running_mean', torch.zeros(num_features))
         self.register_buffer('running_var', torch.ones(num_features))
 
+        #self.register_backward_hook(self.printgradnorm)
+
     def forward(self, x):
+        #debug = Debugger(self.forward, self)
+        #debug.checkForNaNandInf(x)
         assert self.weight is not None and \
                self.bias is not None, "Please assign AdaIN weight first"
         b, c = x.size(0), x.size(1)
         running_mean = self.running_mean.repeat(b)
         running_var = self.running_var.repeat(b)
         x_reshaped = x.contiguous().view(1, b * c, *x.size()[2:])
-
-        isHalf = (x_reshaped.dtype == torch.float16)
-        isHalfWeight = (self.weight.dtype == torch.float16)
-        if (isHalf):
+        isNotFloat = (x_reshaped.dtype != torch.float32)
+        isNotFloatWeight = (self.weight.dtype != torch.float32)
+        if (isNotFloat):
             x_reshaped = x_reshaped.float()
-            if (isHalfWeight): #Should never be called since initialized as float()
+            if (isNotFloatWeight): #Should never be called since initialized as float()
                 self.weight = self.weight.float()
                 self.bias = self.bias.float()
         out = F.batch_norm(
             x_reshaped, running_mean, running_var, self.weight, self.bias,
             True, self.momentum, self.eps)
+        #debug.checkForNaNandInf(out)
         out = out.view(b, c, *x.size()[2:])
-        if (isHalf):
-            out = out.half()
+        #debug.checkForNaNandInf(out)
+        if (isNotFloat):
+            out = GlobalConstants.setTensorToPrecision(out)
         return out
 
     def __repr__(self):
         return self.__class__.__name__ + '(' + str(self.num_features) + ')'
+
+    def printgradnorm(self, cls, grad_input, grad_output):
+        print('Inside ' + cls.__class__.__name__ + ' backward')
+        generaldebug.checkForNaNandInf(grad_output[0], msg="In backward")
+        #print('')
+        #print('grad_input: ', type(grad_input))
+        #print('grad_input[0]: ', type(grad_input[0]))
+        #print('grad_output: ', type(grad_output))
+        #print('grad_output[0]: ', type(grad_output[0]))
+        #print('')
+        #print('grad_input size:', grad_input[0].size())
+        #print('grad_output size:', grad_output[0].size())
+        #print('grad_input norm:', grad_input[0].norm())
+        print('grad_output_max:', grad_output[0].max(), 'grad_output_min:', grad_output[0].min())
+        #print(grad_output)
 
 class InceptionBlock(Conv2dBlock):
     """
@@ -275,7 +370,7 @@ class InceptionBlock(Conv2dBlock):
                 self.inceptionThreads.append(nn.Sequential(*conv))
 
     def forward(self, x, log=False):
-        #print("BLOCKS, INCEPTIONBLOCK: BE AWARE THAT THE CONV2DBLOCK DIDN'T PAD AS MUCH AS THIS ONE")        
+        #print("BLOCKS, INCEPTIONBLOCK: BE AWARE THAT THE CONV2DBLOCK DIDN'T PAD AS MUCH AS THIS ONE")
         if self.activation_first:
             if self.activation:
                 x = self.activation(x)
@@ -316,3 +411,48 @@ class ParallelConv2dBlock(nn.Module):
         l = self.left(x)
         r = self.right(x)
         return torch.cat((l,r), dim=1)
+
+class Printer(nn.Module):
+    def __init__(self, perma_save_counter = 10000, running_save_counter = 100):
+        super(Printer, self).__init__()
+
+        """
+        1. 
+        Think about how you to structure naming.
+        Best practice would be probably to hand to the inception layer the caller-class.
+            But what about ResBlock? They also would need to pass on this parameter
+            I don't really want to introduce new parameters that are not related to the Layer
+            Or you have some intermediate static class like globalsConstants that you mistreat for this
+        You also need some index if the same class creates various InceptionBlocks
+
+        2. 
+        Each x is a batch -> more than one pic. That should probably be different sequences
+        Or the same one in a grid way (which sounds like a lot of work)
+
+        3.
+        How to save something as a sequence lol
+
+        4.
+        What to do about others parallel Layers in the same Inception?
+        Do you want to depict them in the same sequence File or another one?
+        Probably we could also have one folder per InceptionBlock
+
+        """
+        self.name = "?"
+        
+        self.counter = 0
+        try:
+            self.outputPath = GlobalConstants.getOutputPath()
+        except:
+            print("produced an error")
+            self.outputPath = None
+        
+        self.perma_save_counter = perma_save_counter
+        self.running_save_counter = running_save_counter
+
+    def forward(self, x):
+        if counter%running_save_counter==0:
+            print("Leave Britney alone! This is not implemented!")
+
+
+        self.counter += 1

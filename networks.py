@@ -13,6 +13,8 @@ from blocks import LinearBlock, ResBlocks, ActFirstResBlock, InceptionBlock, Con
 
 from debugUtils import Debugger
 
+from customLosses import gradient_penalty
+
 PREFIX = "networks.py"
 KERNEL_SIZE_7 = 3
 KERNEL_SIZE_4 = 3
@@ -21,6 +23,7 @@ KERNEL_SIZE_5 = 3
 #Conv2dBlock = InceptionBlock
 InceptionBlock = Conv2dBlock
 
+debug = Debugger()
 
 def assign_adain_params(adain_params, model):
     # assign the adain_params to the AdaIN layers in model
@@ -28,8 +31,8 @@ def assign_adain_params(adain_params, model):
         if m.__class__.__name__ == "AdaptiveInstanceNorm2d":
             mean = adain_params[:, :m.num_features]
             std = adain_params[:, m.num_features:2*m.num_features]
-            m.bias = mean.contiguous().view(-1)
-            m.weight = std.contiguous().view(-1)
+            m.bias = mean.contiguous().view(-1).float()
+            m.weight = std.contiguous().view(-1).float()
             if adain_params.size(1) > 2*m.num_features:
                 adain_params = adain_params[:, 2*m.num_features:]
 
@@ -46,6 +49,9 @@ def get_num_adain_params(model):
 class GPPatchMcResDis(nn.Module):
     def __init__(self, hp):
         super(GPPatchMcResDis, self).__init__()
+
+        #InceptionBlock = Conv2dBlock
+
         assert hp['n_res_blks'] % 2 == 0, 'n_res_blk must be multiples of 2'
         self.n_layers = hp['n_res_blks'] // 2
         nf = hp['nf']
@@ -54,7 +60,7 @@ class GPPatchMcResDis(nn.Module):
                              pad_type='reflect',
                              norm='none',
                              activation='none')]
-        for i in range(self.n_layers - 1):
+        for i in range(self.n_layers -1 ):
             nf_out = np.min([nf * 2, 1024])
             cnn_f += [ActFirstResBlock(nf, nf, None, 'lrelu', 'none')]
             cnn_f += [ActFirstResBlock(nf, nf_out, None, 'lrelu', 'none')]
@@ -71,7 +77,11 @@ class GPPatchMcResDis(nn.Module):
         self.cnn_f = nn.Sequential(*cnn_f)
         self.cnn_c = nn.Sequential(*cnn_c)
 
+        #self.register_backward_hook(debug.printgradnorm)
+        self.debug = Debugger()
+
     def forward(self, x, y):
+        #print("FORWARD ",self.__class__.__name__)
         assert(x.size(0) == y.size(0))
         feat = self.cnn_f(x)
         out = self.cnn_c(feat)
@@ -80,6 +90,7 @@ class GPPatchMcResDis(nn.Module):
         return out, feat
 
     def calc_dis_fake_loss(self, input_fake, input_label):
+        #self.debug.printCheckpoint(self.calc_dis_fake_loss)
         resp_fake, gan_feat = self.forward(input_fake, input_label)
         total_count = torch.tensor(np.prod(resp_fake.size()),
                                    dtype=torch.float).cuda()
@@ -89,48 +100,34 @@ class GPPatchMcResDis(nn.Module):
         return fake_loss, fake_accuracy, resp_fake
 
     def calc_dis_real_loss(self, input_real, input_label):
+        #self.debug.printCheckpoint(self.calc_dis_real_loss)
         debug = Debugger(self.calc_dis_real_loss, self, PREFIX)
-        #debug.printCheckpoint() #0
-        #print("FORWARD: ",input_real.shape, input_label)
         resp_real, gan_feat = self.forward(input_real, input_label)
-        """
-
-        #print(resp_real.shape)
-        #print(gan_feat.cpu)
-        debug.printCheckpoint() #1
-        a = resp_real.size()
-        debug.printCheckpoint() #2
-        b = np.prod(a)
-        debug.printCheckpoint() #3
-        c = torch.tensor(b)
-        debug.printCheckpoint() #4
-        d = c.float()
-        #print(d.shape)
-        debug.printCheckpoint() #5
-        #exit()
-        e = d.cuda()
-        total_count=d
-        debug.printCheckpoint() #6
-
-        """
         total_count = torch.tensor(np.prod(resp_real.size()),
                                    dtype=torch.float).cuda()
-        #debug.printCheckpoint()
         real_loss = torch.nn.ReLU()(1.0 - resp_real).mean()
         correct_count = (resp_real >= 0).sum()
         real_accuracy = correct_count.type_as(real_loss) / total_count
         return real_loss, real_accuracy, resp_real
 
     def calc_gen_loss(self, input_fake, input_fake_label):
+        #self.debug.printCheckpoint(self.calc_gen_loss)
         resp_fake, gan_feat = self.forward(input_fake, input_fake_label)
+        #print("resp_fake: max: %d, min: %d" % (resp_fake.max(), resp_fake.min()))
+        #print("gan_feat: max: %d, min: %d" % (gan_feat.max(), gan_feat.min()))
+        #print("input_fake: max: %d, min: %d" % (input_fake.max(), input_fake.min()))
         total_count = torch.tensor(np.prod(resp_fake.size()),
                                    dtype=torch.float).cuda()
         loss = -resp_fake.mean()
+        #print("CALC_GEN_LOSS: ",loss)
         correct_count = (resp_fake >= 0).sum()
+        #print("CORRECT COUNT: %d, TOTAL COUNT: %d" % (correct_count, total_count))
         accuracy = correct_count.type_as(loss) / total_count
+        #print("ACC: ",accuracy)
         return loss, accuracy, gan_feat
 
     def calc_grad2(self, d_out, x_in):
+        #self.debug.printCheckpoint(self.calc_grad2)
         batch_size = x_in.size(0)
         grad_dout = autograd.grad(outputs=d_out.mean(),
                                   inputs=x_in,
@@ -141,6 +138,10 @@ class GPPatchMcResDis(nn.Module):
         assert (grad_dout2.size() == x_in.size())
         reg = grad_dout2.sum()/batch_size
         return reg
+
+    def calc_wasserstein_loss(self, pred_real, pred_fake):
+        loss_D_real = torch.mean(pred_real) - torch.mean(pred_fake)
+        return loss_D_real
 
 
 class FewShotGen(nn.Module):
@@ -212,6 +213,7 @@ class FewShotGen(nn.Module):
 class ClassModelEncoder(nn.Module):
     def __init__(self, downs, ind_im, dim, latent_dim, norm, activ, pad_type):
         super(ClassModelEncoder, self).__init__()
+        #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [InceptionBlock(ind_im, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
@@ -233,42 +235,69 @@ class ClassModelEncoder(nn.Module):
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
+        #self.register_backward_hook(debug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x)
 
 
 class ContentEncoder(nn.Module):
     def __init__(self, downs, n_res, input_dim, dim, norm, activ, pad_type):
         super(ContentEncoder, self).__init__()
+        #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [InceptionBlock(input_dim, dim, KERNEL_SIZE_7, 1, 3,
                                    norm=norm,
                                    activation=activ,
                                    pad_type=pad_type)]
+        
+        """
+        for i in range(downs):
+            self.model += [InceptionBlock(dim, 2 * dim, KERNEL_SIZE_4, 1,#2, 
+                                        1,
+                                       norm=norm,
+                                       activation=activ,
+                                       pad_type=pad_type)]
+            if (i == downs-1):
+                self.model += [
+                    nn.MaxPool2d(KERNEL_SIZE_4, 2, padding=1)
+                ]
+            else:
+                self.model += [
+                    nn.MaxPool2d(KERNEL_SIZE_4, 2, padding=0)
+                ]
+            dim *= 2       
+        """
         for i in range(downs):
             self.model += [Conv2dBlock(dim, 2 * dim, KERNEL_SIZE_4, 2, 1,
                                        norm=norm,
                                        activation=activ,
                                        pad_type=pad_type)]
-            dim *= 2
+            dim *= 2 
         self.model += [ResBlocks(n_res, dim,
                                  norm=norm,
                                  activation=activ,
-                                 pad_type=pad_type)]
+                                 pad_type=pad_type,
+                                 inception=False)]
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
+        #self.register_backward_hook(debug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x)
 
 
 class Decoder(nn.Module):
     def __init__(self, ups, n_res, dim, out_dim, res_norm, activ, pad_type):
         super(Decoder, self).__init__()
-
+        #InceptionBlock = Conv2dBlock
         self.model = []
         self.model += [ResBlocks(n_res, dim, res_norm,
-                                 activ, pad_type=pad_type)]
+                                 activ, pad_type=pad_type,
+                                 inception=False)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
                            InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
@@ -280,9 +309,15 @@ class Decoder(nn.Module):
                                    norm='none',
                                    activation='tanh',
                                    pad_type=pad_type)]
+
         self.model = nn.Sequential(*self.model)
 
+        #self.register_backward_hook(debug.printgradnorm)
+
+
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x)
 
 
@@ -298,5 +333,8 @@ class MLP(nn.Module):
                                    norm='none', activation='none')]
         self.model = nn.Sequential(*self.model)
 
+        #self.register_backward_hook(debug.printgradnorm)
+
     def forward(self, x):
+        #print("FORWARD ",self.__class__.__name__)
         return self.model(x.view(x.size(0), -1))
