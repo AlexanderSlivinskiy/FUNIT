@@ -110,21 +110,9 @@ class FUNITModel(nn.Module):
             else: 
                 l_fake.backward(retain_graph=True)
 
-            """
-            #===Wasserstein Loss======#
-            loss_D_real = self.dis.calc_wasserstein_loss(resp_r, resp_f)
-            penalty = customLosses.gradient_penalty_FUNIT(xb, x_translation, self.dis, label_b, 10)
-            loss_wasserstein = loss_D_real + penalty
-            if (GlobalConstants.usingApex):
-                with amp.scale_loss(loss_wasserstein, [self.gen_opt, self.dis_opt]) as scaled_loss:
-                    scaled_loss.backward()
-            else:
-                loss_wasserstein.backward()
-            """
-
             l_total = l_fake + l_real + l_reg
             acc = 0.5 * (acc_f + acc_r)
-            return l_total, l_fake_p, l_real_pre, l_reg_pre, loss_wasserstein, acc
+            return l_total, l_fake_p, l_real_pre, l_reg_pre, acc
         else:
             assert 0, 'Not support operation'
 

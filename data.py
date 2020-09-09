@@ -41,8 +41,8 @@ def default_loader_custom(path):
     if (GlobalConstants.usingApex):
         pic = pic.astype('float32')
 
-    if (pic.dtype == 'float64'):
-        print("LOADING FLOAT64 IMAGE")
+    #if (pic.dtype == 'float64'):
+    #    print("LOADING FLOAT64 IMAGE")
 
     if (GlobalConstants.getInputChannels()==3):
         if (len(pic.shape)==2):

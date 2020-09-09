@@ -279,7 +279,7 @@ class ContentEncoder(nn.Module):
                                  norm=norm,
                                  activation=activ,
                                  pad_type=pad_type,
-                                 inception=True)]
+                                 inception=False)]
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
@@ -297,7 +297,7 @@ class Decoder(nn.Module):
         self.model = []
         self.model += [ResBlocks(n_res, dim, res_norm,
                                  activ, pad_type=pad_type,
-                                 inception=True)]
+                                 inception=False)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
                            InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,

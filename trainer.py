@@ -92,7 +92,7 @@ class Trainer(nn.Module):
         #print("--------PRINTING SUMMARY--------")
         #summary(self.model, [co_data, cl_data, hp, 'dis_update'])
         
-        adverserial_loss, loss_dis_fake_adv, l_reconst, reg, loss_wasserstein, acc = self.model(co_data, cl_data, hp, 'dis_update', it)
+        adverserial_loss, loss_dis_fake_adv, l_reconst, reg, acc = self.model(co_data, cl_data, hp, 'dis_update', it)
         self.loss_dis_total = torch.mean(adverserial_loss)
         self.loss_dis_fake_adv = torch.mean(loss_dis_fake_adv)
         self.loss_dis_real_adv = torch.mean(l_reconst)

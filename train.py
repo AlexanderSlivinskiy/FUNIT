@@ -20,7 +20,7 @@ from blocks import AdaptiveInstanceNorm2d
 from torch.nn import BatchNorm1d, BatchNorm2d
 
 import torch.backends.cudnn as cudnn
-os.environ['CUDA_VISIBLE_DEVICES'] = '1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
+os.environ['CUDA_VISIBLE_DEVICES'] = '0' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
