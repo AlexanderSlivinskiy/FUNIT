@@ -70,6 +70,13 @@ if opts.multigpus:
 else:
     config['gpus'] = 1
 
+trainer.model.half()  # convert to half precision
+for layer in trainer.model.modules():
+    if isinstance(layer, AdaptiveInstanceNorm2d):
+        layer.float()
+    elif isinstance(layer, BatchNorm2d):
+        layer.float()
+
 loaders = get_train_loaders_custom(config)
 train_content_loader = loaders[0]
 train_class_loader = loaders[1]

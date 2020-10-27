@@ -274,7 +274,6 @@ class AdaptiveInstanceNorm2d(nn.Module):
         running_mean = self.running_mean.repeat(b)
         running_var = self.running_var.repeat(b)
         x_reshaped = x.contiguous().view(1, b * c, *x.size()[2:])
-
         isNotFloat = (x_reshaped.dtype != torch.float32)
         isNotFloatWeight = (self.weight.dtype != torch.float32)
         if (isNotFloat):
