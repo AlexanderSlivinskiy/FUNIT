@@ -10,6 +10,7 @@ import math
 from globalConstants import GlobalConstants
 import skimage.io as sk
 from debugUtils import Debugger
+from debugUtils import DebugNet
 
 inplace_bool = False
 
@@ -206,7 +207,6 @@ class Conv2dBlock(nn.Module):
             assert 0, "Unsupported activation: {}".format(activation)
 
         self.conv = nn.Conv2d(in_dim, out_dim, ks, st, bias=self.use_bias)
-
         #self.register_backward_hook(self.printgradnorm)
 
     def forward(self, x):
@@ -234,6 +234,7 @@ class Conv2dBlock(nn.Module):
             if self.activation:
                 x = self.activation(x)
                 #debug.checkForNaNandInf(x,msg="5F")
+        DebugNet.safeImage(x)
         return x
     
     def printgradnorm(self, cls, grad_input, grad_output):
@@ -274,6 +275,7 @@ class AdaptiveInstanceNorm2d(nn.Module):
         running_mean = self.running_mean.repeat(b)
         running_var = self.running_var.repeat(b)
         x_reshaped = x.contiguous().view(1, b * c, *x.size()[2:])
+
         isNotFloat = (x_reshaped.dtype != torch.float32)
         isNotFloatWeight = (self.weight.dtype != torch.float32)
         if (isNotFloat):

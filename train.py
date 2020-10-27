@@ -20,7 +20,7 @@ from blocks import AdaptiveInstanceNorm2d
 from torch.nn import BatchNorm1d, BatchNorm2d
 
 import torch.backends.cudnn as cudnn
-os.environ['CUDA_VISIBLE_DEVICES'] = '0' #"0,1" for the hard stuff, "2" for your everyday bread and butter
+os.environ['CUDA_VISIBLE_DEVICES'] = '1' #"0,1" for the hard stuff, "2" for your everyday bread and butter
 # Enable auto-tuner to find the best algorithm to use for your hardware.
 cudnn.benchmark = True
 
@@ -45,7 +45,9 @@ parser.add_argument('--test_batch_size',
                     type=int,
                     default=4)
 parser.add_argument("--resume",
-                    action="store_true")
+                    type = str,
+                    default="")
+
 opts = parser.parse_args()
 
 # Load experiment setting
@@ -70,13 +72,6 @@ if opts.multigpus:
 else:
     config['gpus'] = 1
 
-trainer.model.half()  # convert to half precision
-for layer in trainer.model.modules():
-    if isinstance(layer, AdaptiveInstanceNorm2d):
-        layer.float()
-    elif isinstance(layer, BatchNorm2d):
-        layer.float()
-
 loaders = get_train_loaders_custom(config)
 train_content_loader = loaders[0]
 train_class_loader = loaders[1]
@@ -93,9 +88,11 @@ GlobalConstants.setOutputPath(output_directory)
 checkpoint_directory, image_directory = make_result_folders(output_directory)
 shutil.copy(opts.config, os.path.join(output_directory, 'config.yaml'))
 
-iterations = trainer.resume(checkpoint_directory,
+resume_directory = opts.resume
+
+iterations = trainer.resume(resume_directory,
                             hp=config,
-                            multigpus=opts.multigpus) if opts.resume else 0
+                            multigpus=opts.multigpus) if opts.resume != "" else 0
 
 
 if (GlobalConstants.getPrecision() == torch.float16 and (not GlobalConstants.usingApex)):
