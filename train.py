@@ -25,7 +25,7 @@ os.environ['CUDA_VISIBLE_DEVICES'] = '1' #"0,1" for the hard stuff, "2" for your
 cudnn.benchmark = True
 
 #USE FOLLOWING COMMAND TO EXECUTE: 
-#python train.py --config configs/funit_confs_custom.yaml
+#python train.py --config configs/funit_confs_custom.yaml --output_path ../../../scratch/slivinskiy/new_datasets/outputs/GPU0
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--config',

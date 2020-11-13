@@ -1,4 +1,7 @@
 import torch
+from skimage.io import imsave
+import os
+import numpy as np
 
 def printCheckpoint(index, funcName, className="", prefix=""):
     print("==="+prefix+" : "+className+"."+funcName+", checkpoint:",index,"===")
@@ -51,3 +54,27 @@ class Debugger():
         #print('grad_input norm:', grad_input[0].norm())
         print('grad_output_max:', grad_output[0].max())
         #print(grad_output)
+
+
+class DebugNet():
+    name = ""
+    safeImgSwitch = False
+
+    def setName(n):
+        DebugNet.name = n
+    
+    def safeImage(pic):
+        if (DebugNet.safeImgSwitch):
+            picName = "pics/pic_"+DebugNet.name+"_"
+            i = 0
+            while (os.path.exists(picName + ((str)(i)) + "_0" + ".png")):
+                i+=1
+            pic = pic.detach().cpu().numpy()
+            print(pic.shape)
+            if len(pic.shape) == 4 :
+                pic = pic[0]
+            #pic = pic.astype(np.uint8) #may be lossy
+            #for j in range(pic.shape[0]):
+            #    imsave(picName + ((str)(i)) + "_" + ((str)(j)) + ".png", pic[j])
+            pic = np.max(pic, axis = 0)
+            imsave(picName + ((str)(i))+ "_0.png", pic)

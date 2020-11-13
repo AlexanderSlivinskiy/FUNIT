@@ -32,14 +32,19 @@ def default_loader_custom(path):
         pic = color.rgba2rgb(pic)
         pic = color.rgb2grey(pic)
         
-    if (pic.dtype == 'uint16'):
+    #if (pic.dtype == 'uint16'):
         #print("anything else than double!!")
-        if (pic.max()<32768):
-            pic = pic.astype('int16')
-        else:
-            pic = pic.astype('int32')
+    #    if (pic.max()<32768):
+    #        pic = pic.astype('int16')
+    #    else:
+    #        print("Converting to int32")
+    #        pic = pic.astype('int32')
     if (GlobalConstants.usingApex):
         pic = pic.astype('float32')
+
+    #if (pic.dtype  == 'int32'):
+    #    print("Converting to uint32")
+    #    pic = pic.astype('uint32')
 
     #if (pic.dtype == 'float64'):
     #    print("LOADING FLOAT64 IMAGE")
@@ -50,7 +55,8 @@ def default_loader_custom(path):
             pic = np.repeat(pic, 3, axis=-1)
         if (pic.shape[0]==3):
             #print("**************3 IS BACK: ",pic.shape)
-            pic = pic.transpose() #Not sure this is correct to get from (y,x,3) to (3,y,x)
+            #pic = pic.transpose((2,0,1)) #Not sure this is correct to get from (y,x,3) to (3,y,x)
+            pass
     elif (GlobalConstants.getInputChannels()==1):
         if (len(pic.shape)==3):
             pic = color.rgb2grey(pic)
@@ -62,6 +68,9 @@ def default_loader_custom(path):
 
     #=============SCALING======================
     shorter_side = min(pic.shape[0], pic.shape[1])
+    if (shorter_side < 256):
+        print("PIC VERY SMALL: ", shorter_side)
+        shorter_side = shorter_side * 4
     if (class_name == "Hela"):
         shorter_side = shorter_side//8
     if (class_name == "mSar"):
@@ -141,7 +150,7 @@ class ImageLabelFilelistCustom(data.Dataset):
                  num_classes = None,
                  return_paths=False):
 
-        
+        print("PATH: ",path)        
         self.classes = next(os.walk(path))[1]
         self.imlist = []
         self.class_to_idx = {self.classes[i]: i for i in range(len(self.classes))}

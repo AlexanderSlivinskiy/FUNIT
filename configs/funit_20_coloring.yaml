@@ -9,7 +9,7 @@ snapshot_save_iter: 5000      # How often do you want to save trained models
 log_iter: 1                   # How often do you want to log the training stats
 
 # optimization options
-max_iter: 100000              # maximum number of training iterations
+max_iter: 500000              # maximum number of training iterations
 weight_decay: 0.0001          # weight decay
 lr_gen: 0.0001                # learning rate for the generator
 lr_dis: 0.0001                # learning rate for the discriminator
@@ -26,19 +26,32 @@ gen:
   latent_dim: 64              # dimension of the latent code for the class model
   n_mlp_blks: 3               # number of mlp blocks
   n_downs_content: 3          # number of downsampling layers in content encoder
-  n_downs_class: 4            # number of downsampling layers in class model encoder
+  n_downs_class: 4           # number of downsampling layers in class model encoder
+  input_nc: 1
+  output_nc: 1
+  update_every: 1
 dis:
   nf: 64                      # base number of filters
   n_res_blks: 10              # number of residual blocks in the discriminator
-  num_classes: 119            # number of classes in the training set
+  num_classes: 26            # number of classes in the training set
+  input_nc: 1
+
+#img options
+size_a: 2868
+size_b: 2868
+scalar: 10
+desired_size: 256
+resize_shorter_side: 256
 
 # data options
 num_workers: 4
-batch_size: 64
-new_size: 140                 # first resize the shortest image side to this size
-crop_image_height: 128        # random crop image of this height
-crop_image_width: 128         # random crop image of this width
-data_folder_train: ./datasets/animals
+batch_size: 8
+new_size:   0                 # first resize the shortest image side to this size
+precision: float32
+optimizer: RMSprop
+crop_image_height: 0          # random crop image of this height
+crop_image_width: 0           # random crop image of this width
+data_folder_train: ../../../scratch/slivinskiy/SOFI/train/
 data_list_train: ./datasets/animals_list_train.txt
-data_folder_test: ./datasets/animals
+data_folder_test: ../../../scratch/slivinskiy/SOFI/test/
 data_list_test: ./datasets/animals_list_test.txt

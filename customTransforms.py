@@ -65,16 +65,14 @@ class RescaleToOneOne(object):
 class ToTensor(object):
     
     def __call__(self, pic):
-        """
         if (pic.dtype == 'uint16'):
-            print("anything else than double!!")
             if (pic.max()<32768):
                 pic = pic.astype('int16')
             else:
                 pic = pic.astype('int32')
-        """
+        
         if (GlobalConstants.getInputChannels()==3 and pic.shape[2]==3):
-            pic=pic.transpose()
+            pic=pic.transpose((2,0,1))
         elif (GlobalConstants.getInputChannels()==1 and len(pic.shape)==2):
             pic=pic.reshape((1, pic.shape[0], pic.shape[1]))
 

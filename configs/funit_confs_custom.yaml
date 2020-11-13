@@ -27,14 +27,14 @@ gen:
   n_mlp_blks: 3               # number of mlp blocks
   n_downs_content: 3          # number of downsampling layers in content encoder
   n_downs_class: 4           # number of downsampling layers in class model encoder
-  input_nc: 1
-  output_nc: 1
-  update_every: 10
+  input_nc: 3
+  output_nc: 3
+  update_every: 1
 dis:
   nf: 64                      # base number of filters
   n_res_blks: 10              # number of residual blocks in the discriminator
   num_classes: 8            # number of classes in the training set
-  input_nc: 1
+  input_nc: 3
 
 #img options
 size_a: 2868
@@ -47,7 +47,7 @@ resize_shorter_side: 300
 num_workers: 4
 batch_size: 8
 new_size:   0                 # first resize the shortest image side to this size
-precision: float32_Apex
+precision: float32
 optimizer: RMSprop
 crop_image_height: 0          # random crop image of this height
 crop_image_width: 0           # random crop image of this width

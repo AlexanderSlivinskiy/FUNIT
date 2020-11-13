@@ -51,10 +51,10 @@ def create_loader(root, path, rescale_size_a, rescale_size_b, batch_size, num_cl
     cut = rescale_size_a - crop_size
     transforms_ = transforms.Compose([
         iaa.Sequential([
-            #iaa.Resize({"shorter-side":resize_shorter_side, "longer-side":"keep-aspect-ratio"}),
+            #iaa.Resize({"shorter-side":desired_size, "longer-side":"keep-aspect-ratio"}),
             iaa.CropToFixedSize(width=desired_size, height=desired_size),
-            iaa.HorizontalFlip(p=0.5),
-            iaa.VerticalFlip(p=0.5),
+            #iaa.HorizontalFlip(p=0.5),
+            #iaa.VerticalFlip(p=0.5),
         ]).augment_image,
         customTransforms.ToTensor(),
         customTransforms.RescaleToOneOne()
@@ -145,14 +145,15 @@ def get_train_loaders_custom(conf):
     batch_size = conf['batch_size']
     num_workers = conf['num_workers']
     root = "."
-    pathBasis = conf["data_folder_train"]
+    dir_train = conf["data_folder_train"]
+    dir_test = conf["data_folder_test"]
     scalar = conf["scalar"]
     rescale_size_a = (conf["size_a"]//scalar)
     rescale_size_b = (conf["size_b"]//scalar)
 
     train_content_loader = create_loader(
         ".",
-        os.path.join(pathBasis, "A"),
+        dir_train,
         rescale_size_a,
         rescale_size_b,
         desired_size = conf["desired_size"],
@@ -163,7 +164,7 @@ def get_train_loaders_custom(conf):
     )
     train_class_loader = create_loader(
         ".",
-        os.path.join(pathBasis, "A"),
+        dir_train,
         rescale_size_a,
         rescale_size_b,
         desired_size = conf["desired_size"],
@@ -172,7 +173,29 @@ def get_train_loaders_custom(conf):
         batch_size=batch_size,
         num_workers=num_workers
     )
-    return (train_content_loader, train_class_loader, train_content_loader, train_class_loader)
+    test_content_loader = create_loader(
+        ".",
+        dir_test,
+        rescale_size_a,
+        rescale_size_b,
+        desired_size = conf["desired_size"],
+        resize_shorter_side = conf["resize_shorter_side"],
+        num_classes=conf['dis']['num_classes'],
+        batch_size=batch_size,
+        num_workers=num_workers
+    )
+    test_class_loader = create_loader(
+        ".",
+        dir_test,
+        rescale_size_a,
+        rescale_size_b,
+        desired_size = conf["desired_size"],
+        resize_shorter_side = conf["resize_shorter_side"],
+        num_classes=conf['dis']['num_classes'],
+        batch_size=batch_size,
+        num_workers=num_workers
+    )
+    return (train_content_loader, train_class_loader, test_content_loader, test_class_loader)
 
 def get_train_loaders(conf):
     batch_size = conf['batch_size']
@@ -260,6 +283,7 @@ def make_result_folders(output_directory):
 
 
 def __write_images(im_outs, dis_img_n, file_name):
+    print("Writing to: ",file_name)
     im_outs = [images.expand(-1, 3, -1, -1) for images in im_outs]
     if im_outs[0].shape != im_outs[1].shape:
         in_dim = im_outs[0].shape[2]

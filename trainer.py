@@ -74,7 +74,7 @@ class Trainer(nn.Module):
 
     def gen_update(self, co_data, cl_data, hp, multigpus, it):
         self.gen_opt.zero_grad()
-        adverserial_loss, ad, xr, cr, sr, ac = self.model(co_data, cl_data, hp, 'gen_update', it)
+        adverserial_loss, ad, xr, cr, sr, ac = self.model(co_data, cl_data, hp, 'gen_update')
         self.loss_gen_total = torch.mean(adverserial_loss)
         self.loss_gen_recon_x = torch.mean(xr)
         self.loss_gen_recon_c = torch.mean(cr)
@@ -92,7 +92,7 @@ class Trainer(nn.Module):
         #print("--------PRINTING SUMMARY--------")
         #summary(self.model, [co_data, cl_data, hp, 'dis_update'])
         
-        adverserial_loss, loss_dis_fake_adv, l_reconst, reg, acc = self.model(co_data, cl_data, hp, 'dis_update', it)
+        adverserial_loss, loss_dis_fake_adv, l_reconst, reg, acc = self.model(co_data, cl_data, hp, 'dis_update')
         self.loss_dis_total = torch.mean(adverserial_loss)
         self.loss_dis_fake_adv = torch.mean(loss_dis_fake_adv)
         self.loss_dis_real_adv = torch.mean(l_reconst)
@@ -131,6 +131,11 @@ class Trainer(nn.Module):
         print('Resume from iteration %d' % iterations)
         return iterations
 
+    def load_ckpt(self, ckpt_name):
+        state_dict = torch.load(ckpt_name)
+        self.model.gen.load_state_dict(state_dict['gen'])
+        self.model.gen_test.load_state_dict(state_dict['gen_test'])
+
     def save(self, snapshot_dir, iterations, multigpus):
         this_model = self.model.module if multigpus else self.model
         # Save generators, discriminators, and optimizers
@@ -145,11 +150,6 @@ class Trainer(nn.Module):
         if (GlobalConstants.usingApex):
             amp_name = os.path.join(snapshot_dir, "amp.pt")
             torch.save({'amp': amp.state_dict()}, amp_name)
-
-    def load_ckpt(self, ckpt_name):
-        state_dict = torch.load(ckpt_name)
-        self.model.gen.load_state_dict(state_dict['gen'])
-        self.model.gen_test.load_state_dict(state_dict['gen_test'])
 
     def translate(self, co_data, cl_data):
         return self.model.translate(co_data, cl_data)

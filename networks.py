@@ -12,13 +12,12 @@ from torch import autograd
 from blocks import LinearBlock, ResBlocks, ActFirstResBlock, InceptionBlock, Conv2dBlock
 
 from debugUtils import Debugger
-
-from customLosses import gradient_penalty
+from debugUtils import DebugNet
 
 PREFIX = "networks.py"
-KERNEL_SIZE_7 = 3
-KERNEL_SIZE_4 = 3
-KERNEL_SIZE_5 = 3
+KERNEL_SIZE_7 = 7
+KERNEL_SIZE_4 = 4
+KERNEL_SIZE_5 = 5
 
 #Conv2dBlock = InceptionBlock
 InceptionBlock = Conv2dBlock
@@ -81,6 +80,7 @@ class GPPatchMcResDis(nn.Module):
         self.debug = Debugger()
 
     def forward(self, x, y):
+        DebugNet.setName("GPPatchMcResDis")
         #print("FORWARD ",self.__class__.__name__)
         assert(x.size(0) == y.size(0))
         feat = self.cnn_f(x)
@@ -139,10 +139,6 @@ class GPPatchMcResDis(nn.Module):
         reg = grad_dout2.sum()/batch_size
         return reg
 
-    def calc_wasserstein_loss(self, pred_real, pred_fake):
-        loss_D_real = torch.mean(pred_real) - torch.mean(pred_fake)
-        return loss_D_real
-
 
 class FewShotGen(nn.Module):
     def __init__(self, hp):
@@ -189,6 +185,7 @@ class FewShotGen(nn.Module):
 
     def forward(self, one_image, model_set):
         # reconstruct an image
+        DebugNet.setName("FewShotGen")
         content, model_codes = self.encode(one_image, model_set)
         model_code = torch.mean(model_codes, dim=0).unsqueeze(0)
         images_trans = self.decode(content, model_code)
@@ -196,6 +193,7 @@ class FewShotGen(nn.Module):
 
     def encode(self, one_image, model_set):
         # extract content code from the input image
+        DebugNet.setName("FewShotGen_Encode")
         content = self.enc_content(one_image)
         # extract model code from the images in the model set
         class_codes = self.enc_class_model(model_set)
@@ -204,6 +202,7 @@ class FewShotGen(nn.Module):
 
     def decode(self, content, model_code):
         # decode content and style codes to an image
+        DebugNet.setName("FewShotGen_Decode")
         adain_params = self.mlp(model_code)
         assign_adain_params(adain_params, self.dec)
         images = self.dec(content)
@@ -239,6 +238,7 @@ class ClassModelEncoder(nn.Module):
 
     def forward(self, x):
         #print("FORWARD ",self.__class__.__name__)
+        DebugNet.setName("ClassMode_Encoder")
         return self.model(x)
 
 
@@ -279,7 +279,7 @@ class ContentEncoder(nn.Module):
                                  norm=norm,
                                  activation=activ,
                                  pad_type=pad_type,
-                                 inception=False)]
+                                 inception=True)]
         self.model = nn.Sequential(*self.model)
         self.output_dim = dim
 
@@ -287,6 +287,7 @@ class ContentEncoder(nn.Module):
 
     def forward(self, x):
         #print("FORWARD ",self.__class__.__name__)
+        DebugNet.setName("Content_Encoder")
         return self.model(x)
 
 
@@ -297,7 +298,7 @@ class Decoder(nn.Module):
         self.model = []
         self.model += [ResBlocks(n_res, dim, res_norm,
                                  activ, pad_type=pad_type,
-                                 inception=False)]
+                                 inception=True)]
         for i in range(ups):
             self.model += [nn.Upsample(scale_factor=2),
                            InceptionBlock(dim, dim // 2, KERNEL_SIZE_5, 1, 2,
@@ -318,6 +319,7 @@ class Decoder(nn.Module):
 
     def forward(self, x):
         #print("FORWARD ",self.__class__.__name__)
+        DebugNet.setName("Decoder")
         return self.model(x)
 
 
@@ -337,4 +339,5 @@ class MLP(nn.Module):
 
     def forward(self, x):
         #print("FORWARD ",self.__class__.__name__)
+        DebugNet.setName("MLP")
         return self.model(x.view(x.size(0), -1))

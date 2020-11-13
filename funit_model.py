@@ -15,8 +15,6 @@ from globalConstants import GlobalConstants
 
 import apex.amp as amp
 
-import customLosses
-
 PREFIX = "funit_model.py"
 
 def recon_criterion(predict, target):
@@ -33,41 +31,36 @@ class FUNITModel(nn.Module):
         self.dis = GPPatchMcResDis(hp['dis'])
         self.gen_test = copy.deepcopy(self.gen)
 
-    #content: co    -> Gives the positions  (image to be transformed from)
-    #class: cl      -> Gives the texture    (image to be transformed into)
-    def forward(self, co_data, cl_data, hp, mode, it):
-    
+    def forward(self, co_data, cl_data, hp, mode):
+
         #debug = Debugger(self.forward.__name__, self.__class__.__name__, PREFIX) #Delete afterwards
 
         xa = co_data[0].cuda()
-        label_a = co_data[1].cuda()
+        la = co_data[1].cuda()
         xb = cl_data[0].cuda()
-        label_b = cl_data[1].cuda()
+        lb = cl_data[1].cuda()
         if mode == 'gen_update':
             c_xa = self.gen.enc_content(xa)
             s_xa = self.gen.enc_class_model(xa)
             s_xb = self.gen.enc_class_model(xb)
-            x_translation = self.gen.decode(c_xa, s_xb)  # translation
-            xa_reconstruct = self.gen.decode(c_xa, s_xa)  # reconstruction
-            #GAN-Gen-Loss
-            #ADVESERIAL LOSS <---- Wasserstein
-            l_adv_t, gen_acc_translation, xt_gan_feat = self.dis.calc_gen_loss(x_translation, label_b)
-            l_adv_r, gen_acc_reconstruct, xr_gan_feat = self.dis.calc_gen_loss(xa_reconstruct, label_a)
-            _, xb_gan_feat = self.dis(xb, label_b)
-            _, xa_gan_feat = self.dis(xa, label_a)
-            #l_c_reconst = loss content reconstruct??
+            xt = self.gen.decode(c_xa, s_xb)  # translation
+            xr = self.gen.decode(c_xa, s_xa)  # reconstruction
+            #if (xt.shape[1]!=xa.shape[1]):
+            #    print("SHAPE OF INPUT %d AND OF PREDICTION %d AREN'T EQUAL!" % (xa.shape, xt.shape))
+            #    xt = F.interpolate(xt, xa.shape[1])
+            l_adv_t, gacc_t, xt_gan_feat = self.dis.calc_gen_loss(xt, lb)
+            l_adv_r, gacc_r, xr_gan_feat = self.dis.calc_gen_loss(xr, la)
+            _, xb_gan_feat = self.dis(xb, lb)
+            _, xa_gan_feat = self.dis(xa, la)
             l_c_rec = recon_criterion(xr_gan_feat.mean(3).mean(2),
                                       xa_gan_feat.mean(3).mean(2))
             l_m_rec = recon_criterion(xt_gan_feat.mean(3).mean(2),
                                       xb_gan_feat.mean(3).mean(2))
-            l_x_rec = recon_criterion(xa_reconstruct, xa.float())
+            l_x_rec = recon_criterion(xr, xa.float())
             l_adv = 0.5 * (l_adv_t + l_adv_r)
-            acc = 0.5 * (gen_acc_translation + gen_acc_reconstruct)
-            #We only want every tenth iteration loss adversary loss
-            if (it%hp['gen']['update_every']==0):
-                l_total = (hp['gan_w'] * l_adv + hp['r_w'] * l_x_rec + hp['fm_w'] * (l_c_rec + l_m_rec))
-            else:
-                l_total =  (hp['r_w'] * l_x_rec + hp['fm_w'] * (l_c_rec + l_m_rec))
+            acc = 0.5 * (gacc_t + gacc_r)
+            l_total = (hp['gan_w'] * l_adv + hp['r_w'] * l_x_rec + hp[
+                'fm_w'] * (l_c_rec + l_m_rec))
             if (GlobalConstants.usingApex):
                 with amp.scale_loss(l_total, [self.gen_opt, self.dis_opt]) as scaled_loss:
                     scaled_loss.backward()
@@ -76,40 +69,32 @@ class FUNITModel(nn.Module):
             return l_total, l_adv, l_x_rec, l_c_rec, l_m_rec, acc
         elif mode == 'dis_update':
             xb.requires_grad_()
-            #resp_r is exactly the output of the discrimator which classifies how likely it
-            #thinks the output is real
-            l_real_pre, acc_r, resp_r = self.dis.calc_dis_real_loss(xb, label_b)
-
-            #KOMMT WEG
+            l_real_pre, acc_r, resp_r = self.dis.calc_dis_real_loss(xb, lb)
             l_real = hp['gan_w'] * l_real_pre
             if (GlobalConstants.usingApex):
                 with amp.scale_loss(l_real, [self.gen_opt, self.dis_opt]) as scaled_loss:
                     scaled_loss.backward(retain_graph=True)
             else:
                 l_real.backward(retain_graph=True)
-
-            #Some Gradient penalty?            
             l_reg_pre = self.dis.calc_grad2(resp_r, xb)
             l_reg = 10 * l_reg_pre
             if (GlobalConstants.usingApex):
                 with amp.scale_loss(l_reg, [self.gen_opt, self.dis_opt]) as scaled_loss:
-                    scaled_loss.backward(retain_graph=True) #added retain_graph so that we can reuse for wasserstein
+                    scaled_loss.backward()
             else:
-                l_reg.backward(retain_graph=True) #added retain_graph so that we can reuse for wasserstein
+                l_reg.backward()
             with torch.no_grad():
                 c_xa = self.gen.enc_content(xa)
                 s_xb = self.gen.enc_class_model(xb)
-                x_translation = self.gen.decode(c_xa, s_xb)
-            l_fake_p, acc_f, resp_f = self.dis.calc_dis_fake_loss(x_translation.detach(),
-                                                                  label_b)
-            #WEG                
+                xt = self.gen.decode(c_xa, s_xb)
+            l_fake_p, acc_f, resp_f = self.dis.calc_dis_fake_loss(xt.detach(),
+                                                                  lb)
             l_fake = hp['gan_w'] * l_fake_p
             if (GlobalConstants.usingApex):
                 with amp.scale_loss(l_fake, [self.gen_opt, self.dis_opt]) as scaled_loss:
-                    scaled_loss.backward(retain_graph=True)
+                    scaled_loss.backward()
             else: 
-                l_fake.backward(retain_graph=True)
-
+                l_fake.backward()
             l_total = l_fake + l_real + l_reg
             acc = 0.5 * (acc_f + acc_r)
             return l_total, l_fake_p, l_real_pre, l_reg_pre, acc
@@ -130,10 +115,10 @@ class FUNITModel(nn.Module):
         c_xa = self.gen_test.enc_content(xa)
         s_xa = self.gen_test.enc_class_model(xa)
         s_xb = self.gen_test.enc_class_model(xb)
-        x_translation = self.gen_test.decode(c_xa, s_xb)
+        xt = self.gen_test.decode(c_xa, s_xb)
         xr = self.gen_test.decode(c_xa, s_xa)
         self.train()
-        return xa, xr_current, xt_current, xb, xr, x_translation
+        return xa, xr_current, xt_current, xb, xr, xt
 
     def translate_k_shot(self, co_data, cl_data, k):
         self.eval()
